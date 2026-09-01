@@ -10,13 +10,15 @@ Thermodynamic Architecture:
      f''(phi_c) = 0  and  f'''(phi_c) = 0
   3. LCST thermal dependence:
      chi(T) = chi_c + beta * (T - Tc_K), with Tc_K = 281.65 K (8.5 °C) and beta = 0.0090 K^-1,
-     such that for nominal 100 uM Tau K18 (phi_total = 0.095), the true theoretical cloud point is
-     T_cloud(100 uM) = 15.0 °C, matching the turbidity onset in Ambadipudi et al. (Nat Commun 2017).
-  4. At 37 °C, binodal coexistence gives phi_dilute = 0.026, phi_dense = 0.670.
+     parameterized to reproduce the experimental turbidity onset at 15.0 - 15.4 °C for 100 uM Tau K18
+     (phi_total = 0.095) reported in Ambadipudi et al. (Nat. Commun. 2017).
+  4. Apparent cloud point T_cloud^app is solved via true 1D root-finding (Brent's method)
+     on the thermodynamic condition:
+       phi_free(T, a_s, dG_ads) - phi_dilute(T, N, Tc, beta, I) = 0.
 """
 
 import numpy as np
-from scipy.optimize import minimize_scalar, fsolve
+from scipy.optimize import minimize_scalar, fsolve, root_scalar, root
 
 try:
     from .material_parameters import (
@@ -26,7 +28,7 @@ try:
         MATERIAL_TABLE_2,
         TAU_K18_SYSTEM,
         KB_J,
-        R_GAS
+        R_GAS_KCAL
     )
 except ImportError:
     from material_parameters import (
@@ -36,7 +38,7 @@ except ImportError:
         MATERIAL_TABLE_2,
         TAU_K18_SYSTEM,
         KB_J,
-        R_GAS
+        R_GAS_KCAL
     )
 
 
@@ -114,12 +116,31 @@ class FloryHugginsVoornOverbeek:
 
     def find_binodal_coexistence(self, T_K=310.15, I_M=0.155):
         """
-        Numerically determined common-tangent binodal coexistence boundaries.
+        Calculates common-tangent binodal coexistence boundaries (phi_dilute, phi_dense).
         """
         c = self.chi(T_K)
         if c <= self.chi_c:
             return None, None
 
+        # Try ultra-fast 2D root solve:
+        d_chi = max(1e-5, c - self.chi_c)
+        p1_init = max(1e-4, self.phi_c - 0.25 * np.sqrt(d_chi))
+        p2_init = min(0.95, self.phi_c + 0.35 * np.sqrt(d_chi))
+
+        def eq_2d(p):
+            p1 = np.clip(p[0], 1e-6, self.phi_c - 1e-6)
+            p2 = np.clip(p[1], self.phi_c + 1e-6, 0.999)
+            mu1 = self.chemical_potential(p1, T_K, I_M)
+            mu2 = self.chemical_potential(p2, T_K, I_M)
+            pi1 = self.osmotic_pressure(p1, T_K, I_M)
+            pi2 = self.osmotic_pressure(p2, T_K, I_M)
+            return [mu1 - mu2, pi1 - pi2]
+
+        sol = root(eq_2d, [p1_init, p2_init], method='hybr', tol=1e-9)
+        if sol.success and 0.0 < sol.x[0] < self.phi_c < sol.x[1] < 1.0:
+            return float(sol.x[0]), float(sol.x[1])
+
+        # Robust grand-potential secant fallback:
         def grand_potential(p, mu_val):
             return self.free_energy_density(p, T_K, I_M) - mu_val * p
 
@@ -130,19 +151,15 @@ class FloryHugginsVoornOverbeek:
 
         mu_min = self.chemical_potential(1e-4, T_K, I_M)
         mu_max = self.chemical_potential(0.999, T_K, I_M)
-
-        mu_grid = np.linspace(mu_min, mu_max, 100)
+        mu_grid = np.linspace(mu_min, mu_max, 80)
         vals = [diff_omega(m) for m in mu_grid]
-
         sign_changes = np.where(np.diff(np.sign(vals)))[0]
         if len(sign_changes) == 0:
             return None, None
 
         idx = sign_changes[0]
         m1, m2 = mu_grid[idx], mu_grid[idx + 1]
-
-        # Secant method:
-        for _ in range(40):
+        for _ in range(30):
             f1, f2 = diff_omega(m1), diff_omega(m2)
             if abs(f2 - f1) < 1e-14:
                 break
@@ -151,9 +168,8 @@ class FloryHugginsVoornOverbeek:
             if abs(f2) < 1e-10:
                 break
 
-        mu_star = m2
-        r1 = minimize_scalar(lambda p: grand_potential(p, mu_star), bounds=(1e-7, self.phi_c), method='bounded')
-        r2 = minimize_scalar(lambda p: grand_potential(p, mu_star), bounds=(self.phi_c, 0.9999), method='bounded')
+        r1 = minimize_scalar(lambda p: grand_potential(p, m2), bounds=(1e-7, self.phi_c), method='bounded')
+        r2 = minimize_scalar(lambda p: grand_potential(p, m2), bounds=(self.phi_c, 0.9999), method='bounded')
         return float(r1.x), float(r2.x)
 
     def find_spinodal_points(self, T_K=310.15, I_M=0.155):
@@ -170,16 +186,42 @@ class FloryHugginsVoornOverbeek:
         sp2 = float(grid2[idx2[0]]) if len(idx2) > 0 else None
         return sp1, sp2
 
-    def calculate_apparent_cloud_point(self, a_s_nm_inv, material="borophene", phi_total=0.095, I_M=0.155):
+    def calculate_apparent_cloud_point(self, a_s_nm_inv=0.0, material="borophene", phi_total=0.095, I_M=0.155, dG_ads=None, Gamma_max=None):
         """
-        Calculates the TRUE thermodynamic apparent cloud point T_cloud^app (in °C) by solving:
-          phi_free(T, a_s) = phi_dilute(T)
+        Solves the TRUE thermodynamic apparent cloud point T_cloud^app (in °C) via Brent's method:
+          g(T) = phi_free(T, a_s, dG) - phi_dilute(T, N, Tc, beta, I) = 0.
         """
-        for t_c in np.linspace(9.0, 60.0, 511):
-            t_k = t_c + 273.15
-            b1, b2 = self.find_binodal_coexistence(t_k, I_M=I_M)
-            if b1 is not None:
-                phi_f, _, _ = adsorption_equilibrium_dimensionless(phi_total, t_k, a_s_nm_inv, material)
-                if phi_f >= b1:
-                    return float(t_c)
-        return None # Fully dissolved across temperature window
+        if dG_ads is None:
+            dG_ads = MATERIAL_TABLE_2[material]["dG_ads_kcal_mol"] if material in MATERIAL_TABLE_2 else -7.8
+        if Gamma_max is None:
+            Gamma_max = MATERIAL_TABLE_2[material]["Gamma_max_nm2"] if material in MATERIAL_TABLE_2 else 0.38
+
+        c_max_uM = (a_s_nm_inv * Gamma_max * 1e30) / 6.022e23
+        m_max = 9.5e-4 * c_max_uM
+
+        def obj(T_C):
+            T_K = T_C + 273.15
+            b1, _ = self.find_binodal_coexistence(T_K, I_M=I_M)
+            if b1 is None:
+                return 1.0 # Above binodal
+            K_deg = np.exp(-dG_ads / (R_GAS_KCAL * T_K))
+            pf = phi_total
+            for _ in range(30):
+                af = (pf / 9.5e-4) / 1e6
+                th = (K_deg * af) / (1.0 + K_deg * af)
+                pf = max(1e-12, phi_total - m_max * th)
+            return pf - b1
+
+        t_min = self.Tc_K - 273.15 + 0.15
+        t_max = 65.0
+        f_min = obj(t_min)
+        f_max = obj(t_max)
+
+        if f_min * f_max > 0:
+            if f_min < 0:
+                return None # Fully dissolved across the entire thermal window
+            else:
+                return float(t_min)
+
+        sol = root_scalar(obj, bracket=[t_min, t_max], method='brentq', xtol=0.01)
+        return float(sol.root)

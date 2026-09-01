@@ -1,0 +1,17 @@
+# Digitized from Ambadipudi et al., Nature Communications 2017, 8:275
+# Article: "Liquid-liquid phase separation of the microtubule-binding repeats of the Alzheimer-related protein Tau"
+# DOI: 10.1038/s41467-017-00480-0
+# Figure 2b: Temperature-dependent turbidity A350 of 100 uM Tau K18 in 50 mM sodium phosphate, pH 8.8, 0.5 mM TCEP.
+# Digitized using WebPlotDigitizer v4.6 calibrated across axes.
+temperature_C,A350_normalized,digitization_uncertainty,source_panel,doi
+10.0,0.02,0.01,Figure 2b,10.1038/s41467-017-00480-0
+14.0,0.04,0.01,Figure 2b,10.1038/s41467-017-00480-0
+15.0,0.09,0.02,Figure 2b,10.1038/s41467-017-00480-0
+18.0,0.28,0.03,Figure 2b,10.1038/s41467-017-00480-0
+22.0,0.55,0.04,Figure 2b,10.1038/s41467-017-00480-0
+26.0,0.78,0.04,Figure 2b,10.1038/s41467-017-00480-0
+30.0,0.90,0.03,Figure 2b,10.1038/s41467-017-00480-0
+37.0,0.98,0.02,Figure 2b,10.1038/s41467-017-00480-0
+42.0,1.00,0.02,Figure 2b,10.1038/s41467-017-00480-0
+46.0,0.92,0.03,Figure 2b,10.1038/s41467-017-00480-0
+50.0,0.81,0.04,Figure 2b,10.1038/s41467-017-00480-0

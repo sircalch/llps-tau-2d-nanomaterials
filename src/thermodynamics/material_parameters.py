@@ -141,7 +141,7 @@ def adsorption_equilibrium_dimensionless(phi_total, T_K, a_s_nm_inv, material="b
     Solves exact Langmuir adsorption mass balance with standard thermodynamic activity:
       a_free = c_free / c_deg = (phi_free / s_phi) / 1e6
       theta_ads = (K_deg * a_free) / (1 + K_deg * a_free)
-      m_tilde_max = s_phi * (a_s * Gamma_max * 1e27) / N_A
+      m_tilde_max = s_phi * (a_s * Gamma_max * 1e30) / N_A
       phi_total = phi_free + m_tilde_max * theta_ads
     """
     if material not in MATERIAL_TABLE_2 or material == "control":

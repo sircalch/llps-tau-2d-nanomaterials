@@ -1,8 +1,5 @@
-# Thermodynamic Modulation of Tau Liquid-Liquid Phase Separation and Condensate Wetting by 2D Nanomaterial Interfaces
-
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![DOI](https://img.shields.io/badge/DOI-10.1039%2FD4SM00000X-blue)](https://doi.org/10.1039/D4SM00000X)
 
 This repository contains the statistical-thermodynamic, Cahn-Hilliard interfacial gradient, and chemical master equation code supporting the manuscript:
 

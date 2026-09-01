@@ -8,7 +8,7 @@ Thermodynamic Architecture:
 --------------------------
 1. Liquid-Liquid Interfacial Tension:
    gamma_LL = integral_[phi_dilute]^[phi_dense] sqrt(2 kappa_grad f_0 Omega_excess(phi)) dphi
-   where f_0 = k_B T / v_ref [J / m³] with v_ref = 1.58e-24 m³, and kappa_grad = (1/6) f_0 b_eff² [J / m].
+   where f_0 = k_B T / v_ref [J / m³] with v_ref = 2.85e-25 m³, and kappa_grad = (1/6) f_0 b_eff² [J / m].
    The resulting gamma_LL has units [J / m² = N / m].
 
 2. Derived Solid-Liquid Surface Energy Excess:

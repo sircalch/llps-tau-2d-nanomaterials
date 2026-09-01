@@ -48,9 +48,11 @@ def main():
         'src/kinetics/condensate_aging_kinetics.py',
         'src/analysis/generate_master_figures.py',
         'tests/test_thermodynamics_and_conversions.py',
+        'data/ambadipudi_2017_fig2b_K18_pH8p8.csv',
         'README.md',
         'requirements.txt',
-        'LICENSE'
+        'LICENSE',
+        'CITATION.cff'
     ]
 
     with zipfile.ZipFile(zip_name, 'w', zipfile.ZIP_DEFLATED) as zf:

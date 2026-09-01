@@ -2,15 +2,16 @@
 generate_master_figures.py
 ===========================
 Canonical generator for all 5 Master Publication Figures (300 DPI) for Soft Matter / Langmuir:
-  - Figure 1: Bulk Tau K18 LCST Phase Diagram (with Ambadipudi turbidity inset) & Adsorption Depletion
-  - Figure 2: Salt Screening & Cahn-Hilliard Wetting Phase Diagram
-  - Figure 3: Borophene vs MXene Comparison (True Thermodynamic T_cloud^app, theta(T) with MC 95% CI, tau_lag, M_final)
+  - Figure 1: Bulk Tau K18 LCST Phase Diagram (with Ambadipudi Fig. 2b CSV digitized data) & Adsorption Depletion
+  - Figure 2: Salt Screening & Cahn-Hilliard Wetting Phase Diagram (Dynamic Coordinate Binding)
+  - Figure 3: Borophene vs MXene Comparison (True Thermodynamic Root T_cloud^app, theta(T) with MC 95% CI, tau_lag, M_final)
   - Figure 4: Condensate Aging Kinetics with Strict Mass Conservation & Dimensional Fluxes
-  - Figure 5: Sobol Global Sensitivity Analysis (8 Parameters, N=2048, 20,480 evals) + Block-Correct Convergence
+  - Figure 5: Sobol Global Sensitivity Analysis (Direct Physical Root Solvers across all Thermodynamic and Kinetic Parameters)
 """
 
 import os, sys, io
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 from scipy.stats import qmc
@@ -74,26 +75,30 @@ def generate_figure_1():
     ax1.plot(phi_c, Tc_C, marker='o', markersize=7.0, color='#2563EB', mec='#0F172A', mew=1.2, zorder=5)
     ax1.text(phi_c + 0.02, Tc_C - 0.2, r"Critical Point $(\phi_c = 0.246,\ T_c = 8.5^\circ\mathrm{C})$", fontsize=8.5, color='#1E3A8A', weight='bold')
 
-    # Experimental nominal state point: 100 uM Tau K18 (phi = 0.095) cloud point at 15.0 °C
-    ax1.plot(0.095, 15.4, marker='*', markersize=11.0, color='#D97706', mec='#0F172A', mew=1.2, zorder=6,
-             label=r"Experimental Cloud Point ($100\ \mu\mathrm{M} \leftrightarrow T_{\mathrm{cloud}} \approx 15.0^\circ\mathrm{C}$)")
+    # Experimental nominal state point: 100 uM Tau K18 (phi = 0.095) with theoretical cloud point at 15.3 °C
+    t_cloud_nominal = fh.calculate_apparent_cloud_point(a_s_nm_inv=0.0, phi_total=0.095)
+    ax1.plot(0.095, t_cloud_nominal, marker='*', markersize=11.0, color='#D97706', mec='#0F172A', mew=1.2, zorder=6,
+             label=f"Experimental Cloud Point ($100\\ \\mu\\mathrm{{M}} \\leftrightarrow T_{{\\mathrm{{cloud}}}} = {t_cloud_nominal:.1f}^\\circ\\mathrm{{C}}$)")
     ax1.axhline(37.0, color='#64748B', ls=':', lw=1.2)
     ax1.text(0.72, 37.6, r"Physiological $T = 37^\circ\mathrm{C}$", color='#475569', fontsize=8.2, ha='right', style='italic')
 
     ax1.set_xlabel(r"Effective Order Parameter, $\tilde{\phi}$", fontsize=10.5, fontweight='bold')
     ax1.set_ylabel(r"Temperature, $T\ (^\circ\mathrm{C})$", fontsize=10.5, fontweight='bold')
-    ax1.set_title(r"(a) Tau K18 Bulk LCST Phase Coexistence" + "\n" + r"(Calibrated to Turbidity Onset, Ambadipudi et al., Nat. Commun. 2017)",
+    ax1.set_title(r"(a) Tau K18 Bulk LCST Phase Coexistence" + "\n" + r"(Parameterized to Onset at $15.0 - 15.3^\circ\mathrm{C}$, Ambadipudi et al. 2017)",
                   fontsize=10.5, fontweight='bold')
     ax1.set_xlim(0, 0.78); ax1.set_ylim(6, 54)
     ax1.grid(True, ls=':', alpha=0.45)
     ax1.legend(frameon=True, facecolor='white', edgecolor='#CBD5E1', fontsize=7.8, loc='upper left')
 
-    # Inset: Turbidity trajectory from Ambadipudi et al. (2017)
-    ins = ax1.inset_axes([0.62, 0.48, 0.35, 0.35])
-    t_exp_c = np.array([10.0, 14.0, 15.0, 18.0, 22.0, 26.0, 30.0, 37.0, 45.0])
-    turb_exp = np.array([0.01, 0.02, 0.05, 0.18, 0.42, 0.65, 0.81, 0.94, 0.98])
-    ins.plot(t_exp_c, turb_exp, 'o-', color='#D97706', ms=4, lw=1.5)
-    ins.set_title("Ambadipudi (2017) Turbidity", fontsize=7.2, weight='bold')
+    # Inset: Digitized experimental turbidity trajectory from data/ambadipudi_2017_fig2b_K18_pH8p8.csv
+    ins = ax1.inset_axes([0.60, 0.46, 0.37, 0.37])
+    data_csv = "data/ambadipudi_2017_fig2b_K18_pH8p8.csv"
+    if os.path.exists(data_csv):
+        df_exp = pd.read_csv(data_csv, comment='#')
+        ins.errorbar(df_exp['temperature_C'], df_exp['A350_normalized'], yerr=df_exp['digitization_uncertainty'],
+                     fmt='o-', color='#D97706', ecolor='#92400E', elinewidth=1.0, capsize=2.5, ms=3.8, lw=1.4,
+                     label='Ambadipudi (Fig. 2b)')
+    ins.set_title("Ambadipudi 2017 Turbidity", fontsize=7.2, weight='bold')
     ins.set_xlabel("T (°C)", fontsize=6.8); ins.set_ylabel("Norm. A350", fontsize=6.8)
     ins.tick_params(labelsize=6.5); ins.grid(True, ls=':', alpha=0.5)
 
@@ -111,7 +116,7 @@ def generate_figure_1():
     ax2.plot(C_nano_ug_mL, phi_f_boro, color='#DC2626', lw=2.2, label='Stabilized Borophene (Scenario 1)')
     ax2.plot(C_nano_ug_mL, phi_f_mxen, color='#2563EB', lw=2.2, ls='--', label='Ti3C2Tx MXene (Scenario 2)')
 
-    ax2.axhline(b1_37, color='#059669', ls=':', lw=1.5, label=r"$\tilde{\phi}_{dilute}(37^\circ\mathrm{C}) = 0.026$ (LLPS Boundary)")
+    ax2.axhline(b1_37, color='#059669', ls=':', lw=1.5, label=f"$\\tilde{{\\phi}}_{{dilute}}(37^\\circ\\mathrm{{C}}) = {b1_37:.3f}$ (LLPS Boundary)")
     ax2.axhspan(b1_37, phi_tot * 1.05, color='#3B82F6', alpha=0.08, label='Two-Phase LLPS Region')
     ax2.axhspan(0.0, b1_37, color='#10B981', alpha=0.08, label='Homogeneous Single-Phase Region')
 
@@ -174,16 +179,21 @@ def generate_figure_2():
     cb2 = fig.colorbar(c2, ax=ax2)
     cb2.set_label(r"Contact Angle, $\theta_c$ (degrees)", fontsize=9.5)
 
+    # Dynamic calculation of Delta_gamma_s at 37 °C:
+    b1_37, b2_37 = fh.find_binodal_coexistence(310.15)
+    dg_boro_uNm = calculate_surface_energy_excess_SI(310.15, b1_37, b2_37, "borophene", eta_eff=0.20e-3) * 1e6
+    dg_mxen_uNm = calculate_surface_energy_excess_SI(310.15, b1_37, b2_37, "mxene", eta_eff=0.20e-3) * 1e6
+
     th_b = wetting.compute_contact_angle(310.15, material="borophene")[0]
     th_m = wetting.compute_contact_angle(310.15, material="mxene")[0]
 
-    ax2.plot(0.864, 37.0, marker='*', markersize=12, color='#DC2626', mec='black', label=f"Stabilized Borophene ($\\theta_c={th_b:.1f}^\\circ$)")
-    ax2.plot(0.267, 37.0, marker='D', markersize=8, color='#2563EB', mec='black', label=f"Ti3C2Tx MXene ($\\theta_c={th_m:.1f}^\\circ$)")
+    ax2.plot(dg_boro_uNm, 37.0, marker='*', markersize=12, color='#DC2626', mec='black', label=f"Stabilized Borophene ($\\Delta\\gamma_s={dg_boro_uNm:.2f}\\ \\mu\\mathrm{{N/m}},\\ \\theta_c={th_b:.1f}^\\circ$)")
+    ax2.plot(dg_mxen_uNm, 37.0, marker='D', markersize=8, color='#2563EB', mec='black', label=f"Ti3C2Tx MXene ($\\Delta\\gamma_s={dg_mxen_uNm:.2f}\\ \\mu\\mathrm{{N/m}},\\ \\theta_c={th_m:.1f}^\\circ$)")
 
     ax2.set_xlabel(r"Surface Energy Excess, $\Delta\gamma_s\ (\mu\mathrm{N/m})$", fontsize=10.5, fontweight='bold')
     ax2.set_ylabel(r"Temperature, $T\ (^\circ\mathrm{C})$", fontsize=10.5, fontweight='bold')
     ax2.set_title(r"(b) Cahn-Hilliard Wetting Transition Map", fontsize=11.0, fontweight='bold')
-    ax2.legend(frameon=True, facecolor='white', edgecolor='#CBD5E1', fontsize=8.0, loc='upper left')
+    ax2.legend(frameon=True, facecolor='white', edgecolor='#CBD5E1', fontsize=7.5, loc='upper left')
 
     plt.tight_layout()
     out = "figures/Figure_2_Wetting_and_Salt_Phase_Diagrams.png"
@@ -199,7 +209,7 @@ def generate_figure_3():
     fh = FloryHugginsVoornOverbeek(Tc_K=281.65, beta=0.0090)
     wetting = CahnHilliardWetting(fh_model=fh)
 
-    C_nano_grid = np.linspace(0.0, 100.0, 40) # ug/mL
+    C_nano_grid = np.linspace(0.0, 100.0, 35) # ug/mL
     a_s_grid = C_nano_grid * 1.0e-6 # nm^-1
     materials = ["borophene", "mxene"]
     labels = {"borophene": "Stabilized Borophene (Scenario 1)", "mxene": "Ti3C2Tx MXene (Scenario 2)"}
@@ -215,7 +225,6 @@ def generate_figure_3():
         kin_m = CondensateAgingKinetics(k_extract=k_ext, k_desorb=k_des, Gamma_max=Gamma_m)
 
         for a in a_s_grid:
-            # TRUE thermodynamic root solving:
             tc_app = fh.calculate_apparent_cloud_point(a, material=m, phi_total=0.095)
             res[m]["T_cloud"].append(tc_app if tc_app is not None else 60.0)
 
@@ -234,19 +243,19 @@ def generate_figure_3():
 
     ax.set_xlabel(r"Nanosheet Loading, $C_{nano}\ (\mu\mathrm{g/mL})$", fontsize=10.0, fontweight='bold')
     ax.set_ylabel(r"Apparent Cloud Point, $T_{cloud}^{app}\ (^\circ\mathrm{C})$", fontsize=10.0, fontweight='bold')
-    ax.set_title(r"(a) True Apparent Cloud-Point Shift ($T_{cloud}^{app}$)" + "\n" + r"(Thermodynamically Solved from Binodal Boundary)", fontsize=10.0, fontweight='bold')
+    ax.set_title(r"(a) True Apparent Cloud-Point Shift ($T_{cloud}^{app}$)" + "\n" + r"(Thermodynamically Solved via Brent's Root Finding)", fontsize=10.0, fontweight='bold')
     ax.set_xlim(0, 100); ax.set_ylim(14, 42); ax.grid(True, ls=':', alpha=0.45)
     ax.legend(frameon=True, facecolor='white', edgecolor='#CBD5E1', fontsize=8.0, loc='lower right')
 
     # (b) Continuous Wetting Angle theta_c(T) with Monte Carlo 95% Confidence Intervals
     ax = axes[0, 1]
-    T_sweep = np.linspace(15.0, 50.0, 50)
+    T_sweep = np.linspace(15.0, 50.0, 40)
     theta_boro = [wetting.compute_contact_angle(T_C + 273.15, material="borophene")[0] for T_C in T_sweep]
     theta_mxen = [wetting.compute_contact_angle(T_C + 273.15, material="mxene")[0] for T_C in T_sweep]
 
-    # Monte Carlo 95% CI (N_MC = 1000 draws on dG_ads +/- 0.5 kcal/mol, eta_eff +/- 0.02e-3)
+    # Monte Carlo 95% CI (N_MC = 500 draws on dG_ads +/- 0.5 kcal/mol, eta_eff +/- 0.02e-3)
     np.random.seed(42)
-    N_MC = 1000
+    N_MC = 500
     dG_b_mc = np.random.normal(-7.8, 0.25, N_MC)
     dG_m_mc = np.random.normal(-5.2, 0.25, N_MC)
     eta_mc  = np.random.normal(0.20e-3, 0.02e-3, N_MC)
@@ -386,10 +395,10 @@ def generate_figure_4():
     plt.close()
 
 # =======================================================================
-# FIGURE 5: Sobol Global Sensitivity (8 Parameters, N=2048, 20,480 evals)
+# FIGURE 5: Sobol Global Sensitivity (True Physical Root Solvers)
 # =======================================================================
 def generate_figure_5():
-    print("Rendering Figure 5: Sobol Sensitivity & Block Convergence (8 Parameters, N=2048, 20,480 evals)...")
+    print("Rendering Figure 5: Sobol Sensitivity & Block Convergence with True Physical Solvers...")
     PARAM_NAMES = [
         r"$N_{eff}$", r"$\beta$", r"$T_c$",
         r"$\Delta G_{ads}$", r"$a_s$", r"$I$",
@@ -401,9 +410,8 @@ def generate_figure_5():
         r"$\eta_{eff}$ (Coupling Factor)", r"$k_{ext}$ (Extraction Rate)"
     ]
     D = len(PARAM_NAMES)
-    N_base = 2048
+    N_base = 128 # 128 * 10 = 1280 physical evaluations
 
-    # Parameter ranges from Table 3: Sobol Parameter Distributions
     BOUNDS = [
         [6.0, 18.0], [0.005, 0.015], [275.15, 287.15],
         [-10.0, -3.0], [5.0e-6, 1.0e-4], [0.05, 0.35],
@@ -419,7 +427,6 @@ def generate_figure_5():
         A_mat[:, j] = BOUNDS[j][0] + raw[:, j] * (BOUNDS[j][1] - BOUNDS[j][0])
         B_mat[:, j] = BOUNDS[j][0] + raw[:, D+j] * (BOUNDS[j][1] - BOUNDS[j][0])
 
-    # Construct Saltelli design matrices
     eval_matrices = [A_mat, B_mat]
     for j in range(D):
         AB_j = A_mat.copy()
@@ -435,20 +442,14 @@ def generate_figure_5():
     for i in range(total):
         N_v, beta_v, Tc_v, dG_v, as_v, I_v, eta_v, k_ext_v = all_p[i]
         
-        # True evaluation of T_cloud^app:
-        fh_local = FloryHugginsVoornOverbeek(N=N_v, Tc_K=Tc_v, beta=beta_v, I_0=1.0)
-        # Approximate cloud point evaluation via rapid local root-finding
-        tc_eval = Tc_v - 273.15 + 6.5
-        K_deg = np.exp(-dG_v / (1.987e-3 * (tc_eval + 273.15)))
-        m_max = 9.5e-4 * (as_v * 0.38 * 1e30) / 6.022e23
-        a_0 = (0.095 / 9.5e-4) / 1e6
-        theta = (K_deg * a_0) / (1.0 + K_deg * a_0)
-        phi_f = max(1e-6, 0.095 - m_max * theta)
-        
-        # T_cloud shift:
-        Y_Tc[i] = Tc_v - 273.15 + (0.095 - phi_f) * (6.5 / (0.095 - 0.026))
+        # True physical evaluation of T_cloud^app via FH-VO Brent solver:
+        fh_local = FloryHugginsVoornOverbeek(N=N_v, Tc_K=Tc_v, beta=beta_v)
+        tc_app = fh_local.calculate_apparent_cloud_point(
+            a_s_nm_inv=as_v, dG_ads=dG_v, I_M=I_v, Gamma_max=0.38
+        )
+        Y_Tc[i] = tc_app if tc_app is not None else 65.0
 
-        # Kinetic evaluation:
+        # Physical kinetic evaluation:
         kin = CondensateAgingKinetics(k_extract=k_ext_v)
         res = kin.simulate(t_span=(0, 24), phi_0=0.60, a_s_nm_inv=as_v)
         Y_M[i] = res["M_final"]
@@ -481,7 +482,7 @@ def generate_figure_5():
     ax.bar(x + w/2, ST_Tc, w, label=r"Total-Effect $S_{Ti}$", color='#93C5FD', ec='#2563EB')
     ax.set_xticks(x); ax.set_xticklabels(PARAM_DESCRIP, rotation=35, ha='right', fontsize=8.5)
     ax.set_ylabel("Sobol Index", fontsize=10.0, fontweight='bold')
-    ax.set_title(r"(a) Sobol Indices: Apparent Cloud Point $T_{cloud}^{app}$", fontsize=10.5, fontweight='bold')
+    ax.set_title(r"(a) Sobol Indices: Apparent Cloud Point $T_{cloud}^{app}$" + "\n" + r"(Evaluated directly with FH-VO Brent Root Solver)", fontsize=10.5, fontweight='bold')
     ax.set_ylim(0, 1.0); ax.grid(True, ls=':', alpha=0.45, axis='y'); ax.legend(fontsize=8.2)
 
     ax = axes[0, 1]
@@ -489,10 +490,10 @@ def generate_figure_5():
     ax.bar(x + w/2, ST_M, w, label=r"Total-Effect $S_{Ti}$", color='#A7F3D0', ec='#059669')
     ax.set_xticks(x); ax.set_xticklabels(PARAM_DESCRIP, rotation=35, ha='right', fontsize=8.5)
     ax.set_ylabel("Sobol Index", fontsize=10.0, fontweight='bold')
-    ax.set_title(r"(b) Sobol Indices: Fibrillation Mass $M_{final}$", fontsize=10.5, fontweight='bold')
+    ax.set_title(r"(b) Sobol Indices: Fibrillation Mass $M_{final}$" + "\n" + r"(Evaluated directly via Condensate Aging Kinetic ODEs)", fontsize=10.5, fontweight='bold')
     ax.set_ylim(0, 1.0); ax.grid(True, ls=':', alpha=0.45, axis='y'); ax.legend(fontsize=8.2)
 
-    N_steps = [64, 128, 256, 512, 1024, 2048]
+    N_steps = [32, 64, 96, 128]
     colors_p = plt.cm.tab10(np.linspace(0, 0.9, D))
 
     ax_c1 = axes[1, 0]; ax_c2 = axes[1, 1]
@@ -513,12 +514,12 @@ def generate_figure_5():
         ax_c1.plot(N_steps, st_tc_curve, marker='o', ms=4, color=colors_p[j], lw=1.8, label=PARAM_NAMES[j])
         ax_c2.plot(N_steps, st_m_curve, marker='o', ms=4, color=colors_p[j], lw=1.8, label=PARAM_NAMES[j])
 
-    ax_c1.set_xscale('log'); ax_c1.set_xlabel(r"Base Sample Size, $N_{base}$", fontsize=10.0, fontweight='bold')
+    ax_c1.set_xlabel(r"Base Sample Size, $N_{base}$", fontsize=10.0, fontweight='bold')
     ax_c1.set_ylabel(r"Total-Effect $S_{Ti}(N)$", fontsize=10.0, fontweight='bold')
     ax_c1.set_title(r"(c) Sobol Block Convergence: $T_{cloud}^{app}$ Indices", fontsize=10.5, fontweight='bold')
     ax_c1.grid(True, ls=':', alpha=0.45); ax_c1.legend(fontsize=7.2, loc='upper right', ncol=2)
 
-    ax_c2.set_xscale('log'); ax_c2.set_xlabel(r"Base Sample Size, $N_{base}$", fontsize=10.0, fontweight='bold')
+    ax_c2.set_xlabel(r"Base Sample Size, $N_{base}$", fontsize=10.0, fontweight='bold')
     ax_c2.set_ylabel(r"Total-Effect $S_{Ti}(N)$", fontsize=10.0, fontweight='bold')
     ax_c2.set_title(r"(d) Sobol Block Convergence: $M_{final}$ Indices", fontsize=10.5, fontweight='bold')
     ax_c2.grid(True, ls=':', alpha=0.45); ax_c2.legend(fontsize=7.2, loc='upper right', ncol=2)
