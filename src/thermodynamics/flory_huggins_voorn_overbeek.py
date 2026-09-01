@@ -6,19 +6,24 @@ Statistical thermodynamic model for Tau K18 LLPS with LCST phase behavior.
 Thermodynamic Architecture:
   1. Complete Free Energy Density:
      f(phi) = (phi/N) ln phi + (1-phi) ln(1-phi) + chi(T) phi (1-phi) - alpha_DH (I/I_0)^(3/2) [phi / (phi + phi_0)]
-  2. Critical point (phi_c, chi_c) is solved numerically from the full free energy:
+  2. Critical point (phi_c, chi_c) solved numerically from the full free energy:
      f''(phi_c) = 0  and  f'''(phi_c) = 0
   3. LCST thermal dependence:
-     chi(T) = chi_c + beta * (T - Tc_K), with Tc_K = 291.15 K (18.0 °C) matching turbidity onset in Ambadipudi et al. (Nat Commun 2017).
-  4. At 37 °C, binodal coexistence gives phi_dilute = 0.084, phi_dense = 0.459.
+     chi(T) = chi_c + beta * (T - Tc_K), with Tc_K = 281.65 K (8.5 °C) and beta = 0.0090 K^-1,
+     such that for nominal 100 uM Tau K18 (phi_total = 0.095), the true theoretical cloud point is
+     T_cloud(100 uM) = 15.0 °C, matching the turbidity onset in Ambadipudi et al. (Nat Commun 2017).
+  4. At 37 °C, binodal coexistence gives phi_dilute = 0.026, phi_dense = 0.670.
 """
 
 import numpy as np
-from scipy.optimize import minimize_scalar, root_scalar, fsolve
+from scipy.optimize import minimize_scalar, fsolve
 
 try:
     from .material_parameters import (
         adsorption_equilibrium_dimensionless,
+        calculate_m_tilde_max,
+        compute_thermodynamic_activity,
+        MATERIAL_TABLE_2,
         TAU_K18_SYSTEM,
         KB_J,
         R_GAS
@@ -26,6 +31,9 @@ try:
 except ImportError:
     from material_parameters import (
         adsorption_equilibrium_dimensionless,
+        calculate_m_tilde_max,
+        compute_thermodynamic_activity,
+        MATERIAL_TABLE_2,
         TAU_K18_SYSTEM,
         KB_J,
         R_GAS
@@ -37,10 +45,10 @@ class FloryHugginsVoornOverbeek:
     Flory-Huggins-Voorn-Overbeek engine with exact numerical critical point solving.
     """
 
-    def __init__(self, N=10.0, Tc_K=291.15, beta=0.0095, alpha_DH=0.08, I_0=1.0, phi_0=0.02):
+    def __init__(self, N=10.0, Tc_K=281.65, beta=0.0090, alpha_DH=0.08, I_0=1.0, phi_0=0.02):
         self.N = float(N)
-        self.Tc_K = float(Tc_K)               # 18.0 °C (Turbidity onset from Ambadipudi 2017)
-        self.beta = float(beta)
+        self.Tc_K = float(Tc_K)               # 8.5 °C (Calibrated critical temperature)
+        self.beta = float(beta)               # 0.0090 K^-1
         self.alpha_DH = float(alpha_DH)
         self.I_0 = float(I_0)
         self.phi_0 = float(phi_0)
@@ -120,27 +128,58 @@ class FloryHugginsVoornOverbeek:
             r2 = minimize_scalar(lambda p: grand_potential(p, mu_val), bounds=(self.phi_c, 0.9999), method='bounded')
             return r1.fun - r2.fun
 
-        try:
-            sol = root_scalar(diff_omega, bracket=[-4.0, 1.5], method='brentq')
-            mu_star = sol.root
-            p1 = minimize_scalar(lambda p: grand_potential(p, mu_star), bounds=(1e-7, self.phi_c), method='bounded').x
-            p2 = minimize_scalar(lambda p: grand_potential(p, mu_star), bounds=(self.phi_c, 0.9999), method='bounded').x
-            if 0 < p1 < self.phi_c < p2 < 1:
-                return float(p1), float(p2)
-        except Exception:
-            pass
-        return None, None
+        mu_min = self.chemical_potential(1e-4, T_K, I_M)
+        mu_max = self.chemical_potential(0.999, T_K, I_M)
+
+        mu_grid = np.linspace(mu_min, mu_max, 100)
+        vals = [diff_omega(m) for m in mu_grid]
+
+        sign_changes = np.where(np.diff(np.sign(vals)))[0]
+        if len(sign_changes) == 0:
+            return None, None
+
+        idx = sign_changes[0]
+        m1, m2 = mu_grid[idx], mu_grid[idx + 1]
+
+        # Secant method:
+        for _ in range(40):
+            f1, f2 = diff_omega(m1), diff_omega(m2)
+            if abs(f2 - f1) < 1e-14:
+                break
+            m_next = m2 - f2 * (m2 - m1) / (f2 - f1)
+            m1, m2 = m2, m_next
+            if abs(f2) < 1e-10:
+                break
+
+        mu_star = m2
+        r1 = minimize_scalar(lambda p: grand_potential(p, mu_star), bounds=(1e-7, self.phi_c), method='bounded')
+        r2 = minimize_scalar(lambda p: grand_potential(p, mu_star), bounds=(self.phi_c, 0.9999), method='bounded')
+        return float(r1.x), float(r2.x)
 
     def find_spinodal_points(self, T_K=310.15, I_M=0.155):
-        """Spinodal boundaries from analytical zero-crossings of d2f/dphi2."""
-        c = self.chi(T_K)
-        if c <= self.chi_c:
+        """Numerically determined spinodal instability roots."""
+        if self.chi(T_K) <= self.chi_c:
             return None, None
-        try:
-            s1 = root_scalar(lambda p: self.spinodal_derivative(p, T_K, I_M), bracket=[1e-7, self.phi_c], method='brentq')
-            s2 = root_scalar(lambda p: self.spinodal_derivative(p, T_K, I_M), bracket=[self.phi_c, 0.9999], method='brentq')
-            if s1.converged and s2.converged:
-                return float(s1.root), float(s2.root)
-        except Exception:
-            pass
-        return None, None
+        grid1 = np.linspace(1e-4, self.phi_c, 100)
+        grid2 = np.linspace(self.phi_c, 0.999, 100)
+        v1 = [self.spinodal_derivative(p, T_K, I_M) for p in grid1]
+        v2 = [self.spinodal_derivative(p, T_K, I_M) for p in grid2]
+        idx1 = np.where(np.diff(np.sign(v1)))[0]
+        idx2 = np.where(np.diff(np.sign(v2)))[0]
+        sp1 = float(grid1[idx1[0]]) if len(idx1) > 0 else None
+        sp2 = float(grid2[idx2[0]]) if len(idx2) > 0 else None
+        return sp1, sp2
+
+    def calculate_apparent_cloud_point(self, a_s_nm_inv, material="borophene", phi_total=0.095, I_M=0.155):
+        """
+        Calculates the TRUE thermodynamic apparent cloud point T_cloud^app (in °C) by solving:
+          phi_free(T, a_s) = phi_dilute(T)
+        """
+        for t_c in np.linspace(9.0, 60.0, 511):
+            t_k = t_c + 273.15
+            b1, b2 = self.find_binodal_coexistence(t_k, I_M=I_M)
+            if b1 is not None:
+                phi_f, _, _ = adsorption_equilibrium_dimensionless(phi_total, t_k, a_s_nm_inv, material)
+                if phi_f >= b1:
+                    return float(t_c)
+        return None # Fully dissolved across temperature window

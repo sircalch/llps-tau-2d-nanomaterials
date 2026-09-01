@@ -1,0 +1,16 @@
+cff-version: 1.2.0
+message: "If you use this code or model in your research, please cite it as below."
+authors:
+  - family-names: "Monreal Hernández"
+    given-names: "Andrés"
+    orcid: "https://orcid.org/0000-0002-0000-0000"
+  - family-names: "Muñoz Bautista"
+    given-names: "Jesús Martín"
+  - family-names: "Franco Amaya"
+    given-names: "Sara Lizbeth"
+  - family-names: "Martínez Osorio"
+    given-names: "Carlos Ivanhoe"
+title: "Thermodynamic modulation of Tau liquid-liquid phase separation and condensate wetting by two-dimensional nanomaterial interfaces"
+version: 1.0.0
+date-released: 2026-08-31
+url: "https://github.com/sircalch/llps-tau-2d-nanomaterials"

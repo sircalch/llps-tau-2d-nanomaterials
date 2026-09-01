@@ -63,7 +63,8 @@ TAU_K18_SYSTEM = {
     "s_phi_per_uM": 9.50e-4,              # Calibrated order-parameter scale factor: 0.950 mM^-1
     "reference_c_uM": 100.0,              # Nominal experimental concentration (100 uM -> phi_tilde = 0.095)
     "experimental_buffer": "100 uM Tau K18, 50 mM sodium phosphate, pH 8.8, 0.5 mM TCEP",
-    "fitted_effective_Tc_C": 18.0,        # Fitted effective LCST onset (constrained by ~15 °C onset)
+    "fitted_effective_Tc_C": 8.5,         # Calibrated critical temperature Tc (cloud point at 100 uM = 15.0 °C)
+    "fitted_effective_beta": 0.0090,      # Calibrated LCST slope beta [K^-1]
     "reference_volume_m3": 2.85e-25,      # Phenomenological energy-density scale volume v_ref (f0 = 1.50e4 J/m³)
     "eta_eff_nominal": 0.20e-3,           # Phenomenological interfacial coupling factor (xi / R ~ 10^-3)
 }
@@ -122,11 +123,11 @@ MATERIAL_TABLE_2 = {
 def calculate_m_tilde_max(a_s_nm_inv, Gamma_max_nm2=0.38):
     """
     Computes capacity on the exact order-parameter scale:
-      c_max_ads = (a_s * Gamma_max * 1e27) / N_A  [uM]
+      c_max_ads = (a_s * Gamma_max * 1e30) / N_A  [uM]
       m_tilde_max = s_phi * c_max_ads
     """
     s_phi = TAU_K18_SYSTEM["s_phi_per_uM"]
-    c_max_ads_uM = (a_s_nm_inv * Gamma_max_nm2 * 1e27) / N_AVO
+    c_max_ads_uM = (a_s_nm_inv * Gamma_max_nm2 * 1e30) / N_AVO
     return float(s_phi * c_max_ads_uM)
 
 def compute_thermodynamic_activity(phi_tilde):
