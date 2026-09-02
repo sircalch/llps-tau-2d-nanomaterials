@@ -10,12 +10,12 @@ This repository contains the statistical-thermodynamic, Cahn-Hilliard interfacia
 
 ## 🔬 Scientific Summary
 
-* **Bulk LCST Thermodynamics:** Calibrated Flory-Huggins-Voorn-Overbeek (FH-VO) engine matching the Lower Critical Solution Temperature (LCST) and turbidity onset of Tau K18 ($100\ \mu\text{M} \leftrightarrow T_{\text{cloud}} = 15.0^\circ\text{C}$; Ambadipudi et al., *Nat. Commun.* 2017).
+* **Bulk LCST Thermodynamics:** Calibrated Flory-Huggins-Voorn-Overbeek (FH-VO) engine matching the Lower Critical Solution Temperature (LCST) and turbidity onset of Tau K18 ($100\ \mu\text{M} \leftrightarrow T_{\text{cloud}} = 15.3^\circ\text{C}$ via Brent's method; consistent with ~15 °C onset, Ambadipudi et al., *Nat. Commun.* 2017).
 * **Adsorption Mass Balance:** Standard thermodynamic activity formulation ($a = c / c^\circ$) with exact surface capacity $c_{\max} = \frac{a_s \Gamma_{\max} \cdot 10^{30}}{N_A}\ [\mu\text{M}]$.
-* **Emergent LLPS Dissolution:** Stabilized Borophene ($\Delta G_{\text{ads}} = -7.8\text{ kcal/mol}$) suppresses LLPS near $C_{\text{nano}}^{\text{crit}} \approx 98.6\ \mu\text{g/mL}$ at $37^\circ\text{C}$, whereas $\text{Ti}_3\text{C}_2\text{T}_x$ MXene ($\Delta G_{\text{ads}} = -5.2\text{ kcal/mol}$) produces partial depletion ($c_{\text{free}} \approx 88\ \mu\text{M}$ at $100\ \mu\text{g/mL}$), maintaining stable droplets.
+* **Adsorption-Driven Monomer Depletion at 37 °C:** Stabilized Borophene ($\Delta G_{\text{ads}} = -7.8\text{ kcal/mol}$, $100\ \mu\text{g/mL}$) shifts the apparent cloud point to $T_{\text{cloud}}^{\text{app}} \approx 29.4^\circ\text{C}$ and depletes free monomer to $c_{\text{free}} \approx 41.4\ \mu\text{M}$ (~60% depletion) at $37^\circ\text{C}$. LLPS is dissolved at $T \le 29.4^\circ\text{C}$ but remains active at $37^\circ\text{C}$. $\text{Ti}_3\text{C}_2\text{T}_x$ MXene ($\Delta G_{\text{ads}} = -5.2\text{ kcal/mol}$) produces partial depletion ($c_{\text{free}} \approx 87.6\ \mu\text{M}$ at $100\ \mu\text{g/mL}$, $T_{\text{cloud}}^{\text{app}} \approx 17.8^\circ\text{C}$), maintaining stable droplets.
 * **Cahn-Hilliard Wetting:** Derived Young contact angles ($\theta_c = 50.3^\circ$ for Borophene vs $79.3^\circ$ for MXene) under a unified continuum energy-density scale $f_0 = 1.50\times 10^4\text{ J/m}^3$ ($\gamma_{LL} = 1.60\ \mu\text{N/m}$).
 * **Condensate Aging Kinetics:** Mass-conserving master equations ($\max |\Delta M| < 10^{-14}$) evaluating secondary nucleation retardation under dimensional fluxes.
-* **Global Sensitivity Analysis:** Saltelli-Jansen Sobol variance decomposition ($N_{\text{base}} = 2048$, $20,480$ evaluations) with block-correct convergence.
+* **Global Sensitivity Analysis:** Saltelli-Jansen Sobol variance decomposition ($N_{\text{base}} = 512$, $D = 8$, $N_{\text{eval}} = 5120$; scrambled Sobol seed=42, Jansen estimator) with block convergence verified across $N \in \{64, 128, 256, 512\}$.
 
 ---
 

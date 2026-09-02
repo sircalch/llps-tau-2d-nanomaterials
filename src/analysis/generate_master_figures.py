@@ -122,7 +122,7 @@ def generate_figure_1():
 
     ax2.set_xlabel(r"Nanosheet Loading, $C_{nano}\ (\mu\mathrm{g/mL})\ [a_s = 0 - 10^{-4}\ \mathrm{nm}^{-1}]$", fontsize=10.5, fontweight='bold')
     ax2.set_ylabel(r"Free Monomer Order Parameter, $\tilde{\phi}_{free}$", fontsize=10.5, fontweight='bold')
-    ax2.set_title(r"(b) Emergent LLPS Dissolution via Adsorption" + "\n" + r"($T = 37^\circ\mathrm{C},\ \tilde{\phi}_{total} = 0.095\ [100\ \mu\mathrm{M}]$)",
+    ax2.set_title(r"(b) Adsorption-Driven Monomer Depletion at $37^\circ\mathrm{C}$" + "\n" + r"($\tilde{\phi}_{total} = 0.095\ [100\ \mu\mathrm{M}]$, LLPS not dissolved within 0--100 $\mu$g/mL)",
                   fontsize=10.5, fontweight='bold')
     ax2.set_xlim(0, 100); ax2.set_ylim(0.015, 0.100)
     ax2.grid(True, ls=':', alpha=0.45)
@@ -410,7 +410,7 @@ def generate_figure_5():
         r"$\eta_{eff}$ (Coupling Factor)", r"$k_{ext}$ (Extraction Rate)"
     ]
     D = len(PARAM_NAMES)
-    N_base = 128 # 128 * 10 = 1280 physical evaluations
+    N_base = 512  # 512 * (D+2) = 5120 physical evaluations; scrambled Sobol, seed=42, Jansen estimator
 
     BOUNDS = [
         [6.0, 18.0], [0.005, 0.015], [275.15, 287.15],
@@ -460,6 +460,7 @@ def generate_figure_5():
         S1 = np.zeros(D); ST = np.zeros(D)
         for j in range(D):
             fAB = fAB_list[j]
+            # Jansen (1999) estimator: ST_j = E[(fA - fAB_j)^2] / (2*Var)
             ST[j] = np.mean((fA - fAB)**2) / (2.0 * v_tot)
             S1[j] = max(0.0, (np.mean(fB * fAB) - np.mean(fA)*np.mean(fB)) / v_tot)
         return np.clip(S1, 0, 1), np.clip(ST, 0, 1)
@@ -482,7 +483,7 @@ def generate_figure_5():
     ax.bar(x + w/2, ST_Tc, w, label=r"Total-Effect $S_{Ti}$", color='#93C5FD', ec='#2563EB')
     ax.set_xticks(x); ax.set_xticklabels(PARAM_DESCRIP, rotation=35, ha='right', fontsize=8.5)
     ax.set_ylabel("Sobol Index", fontsize=10.0, fontweight='bold')
-    ax.set_title(r"(a) Sobol Indices: Apparent Cloud Point $T_{cloud}^{app}$" + "\n" + r"(Evaluated directly with FH-VO Brent Root Solver)", fontsize=10.5, fontweight='bold')
+    ax.set_title(r"(a) Sobol Indices: Apparent Cloud Point $T_{cloud}^{app}$" + "\n" + r"($N_{base}=512$, $D=8$, $N_{eval}=5120$, scrambled Sobol seed=42, Jansen estimator)", fontsize=10.5, fontweight='bold')
     ax.set_ylim(0, 1.0); ax.grid(True, ls=':', alpha=0.45, axis='y'); ax.legend(fontsize=8.2)
 
     ax = axes[0, 1]
@@ -490,10 +491,10 @@ def generate_figure_5():
     ax.bar(x + w/2, ST_M, w, label=r"Total-Effect $S_{Ti}$", color='#A7F3D0', ec='#059669')
     ax.set_xticks(x); ax.set_xticklabels(PARAM_DESCRIP, rotation=35, ha='right', fontsize=8.5)
     ax.set_ylabel("Sobol Index", fontsize=10.0, fontweight='bold')
-    ax.set_title(r"(b) Sobol Indices: Fibrillation Mass $M_{final}$" + "\n" + r"(Evaluated directly via Condensate Aging Kinetic ODEs)", fontsize=10.5, fontweight='bold')
+    ax.set_title(r"(b) Sobol Indices: Fibrillation Mass $M_{final}$" + "\n" + r"($N_{base}=512$, no second-order indices; Jansen estimator)", fontsize=10.5, fontweight='bold')
     ax.set_ylim(0, 1.0); ax.grid(True, ls=':', alpha=0.45, axis='y'); ax.legend(fontsize=8.2)
 
-    N_steps = [32, 64, 96, 128]
+    N_steps = [64, 128, 256, 512]  # Convergence sub-blocks
     colors_p = plt.cm.tab10(np.linspace(0, 0.9, D))
 
     ax_c1 = axes[1, 0]; ax_c2 = axes[1, 1]

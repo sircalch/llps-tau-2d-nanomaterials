@@ -12,7 +12,7 @@ Key Physical and Dimensional Architecture:
    where:
      - s_phi = 0.950 mM^-1 = 9.50e-4 uM^-1 (calibrated so that c = 100 uM -> phi_tilde = 0.095)
      - Reference lattice volume: v_ref = 0.95 / N_A = 1.58e-24 m³ = 1580 nm³
-     - Hydrodynamic radius: R_h = 3.4 ± 0.6 nm (SAXS/DLS, JACS Au 2021, 1:1007)
+     - Hydrodynamic radius: R_h = 3.4 ± 0.6 nm (SAXS/DLS, JACS Au 2022, 2:673)
      - Molar overlap concentration: c*_molar = 3 / (4 * pi * N_A * Rh³) ~ 10.1 mM
      - Mass overlap concentration: c*_mass ~ 141 g/L
 
@@ -29,9 +29,9 @@ Key Physical and Dimensional Architecture:
      C_nano = 1 ug/mL = 1 g/m³ -> a_s = 1000 m^-1 = 1.0e-6 nm^-1.
      C_nano = 100 ug/mL -> a_s = 1.0e-4 nm^-1.
    Adsorption capacity in molar terms:
-     c_max_ads = (a_s * Gamma_max * 1e27) / N_A  [uM]
+     c_max_ads = (a_s * Gamma_max * 1e30) / N_A  [uM]
    Dimensionless capacity on order-parameter scale:
-     m_tilde_max = s_phi * c_max_ads = s_phi * (a_s * Gamma_max * 1e27) / N_A
+     m_tilde_max = s_phi * c_max_ads = s_phi * (a_s * Gamma_max * 1e30) / N_A
    Exact order-parameter mass balance:
      phi_tilde_total = phi_tilde_free + m_tilde_max * theta_ads
 """
@@ -41,32 +41,36 @@ import numpy as np
 # -----------------------------------------------------------------------
 # Fundamental Constants
 # -----------------------------------------------------------------------
-R_GAS_KCAL = 1.987e-3   # kcal / (mol·K)
-R_GAS      = 1.987e-3   # kcal / (mol·K)
-R_GAS_J    = 8.314      # J / (mol·K)
-N_AVO      = 6.022e23   # mol⁻¹
-KB_J       = 1.381e-23  # J / K
-C_STANDARD_UM = 1.0e6   # 1.0 M standard state = 1.0e6 uM
+R_GAS_KCAL     = 1.987e-3   # kcal / (mol·K)
+R_GAS          = 1.987e-3   # kcal / (mol·K)
+R_GAS_J        = 8.314      # J / (mol·K)
+N_AVO          = 6.022e23   # mol⁻¹
+N_A            = 6.022e23   # mol⁻¹
+KB_J           = 1.381e-23  # J / K
+C_STANDARD_UM  = 1.0e6      # 1.0 M standard state = 1.0e6 uM
+S_PHI_PER_UM   = 9.50e-4    # 0.950 mM^-1
 
 # -----------------------------------------------------------------------
-# Biological Reference System: Tau K18 (Ambadipudi et al., Nat Commun 2017)
+# Table 1: Biological Reference System: Tau K18 (Ambadipudi et al., Nat Commun 2017)
 # -----------------------------------------------------------------------
 TAU_K18_SYSTEM = {
     "construct": "Tau K18 (4-repeat microtubule-binding domain, Q244-E372)",
     "molecular_weight_Da": 14000.0,
     "N_eff": 10.0,                        # Effective Flory polymerization index
     "bare_molecular_volume_nm3": 17.2,    # Dry molecular volume MW / (rho * N_A)
-    "hydrodynamic_radius_nm": 3.4,        # Experimental Rh from SAXS/DLS (Ramis et al., JACS Au 2021, 1:1007)
+    "hydrodynamic_radius_nm": 3.4,        # Experimental Rh from SAXS/DLS (Stelzl et al., JACS Au 2022, 2:673)
     "swollen_coil_volume_nm3": 164.6,     # 4/3 * pi * Rh³
     "c_star_molar_mM": 10.1,              # Molar overlap concentration: 3 / (4 pi N_A Rh³)
     "c_star_mass_g_L": 141.0,             # Mass overlap concentration: 3 MW / (4 pi N_A Rh³)
     "s_phi_per_uM": 9.50e-4,              # Calibrated order-parameter scale factor: 0.950 mM^-1
+    "s_phi": 9.50e-4,                     # Alias
     "reference_c_uM": 100.0,              # Nominal experimental concentration (100 uM -> phi_tilde = 0.095)
     "experimental_buffer": "100 uM Tau K18, 50 mM sodium phosphate, pH 8.8, 0.5 mM TCEP",
-    "fitted_effective_Tc_C": 8.5,         # Calibrated critical temperature Tc (cloud point at 100 uM = 15.0 °C)
-    "fitted_effective_beta": 0.0090,      # Calibrated LCST slope beta [K^-1]
+    "fitted_effective_Tc_C": 8.5,         # Parameterized critical temperature Tc (cloud point at 100 uM = 15.3 °C)
+    "fitted_effective_beta": 0.0090,      # Parameterized LCST slope beta [K^-1]
     "reference_volume_m3": 2.85e-25,      # Phenomenological energy-density scale volume v_ref (f0 = 1.50e4 J/m³)
     "eta_eff_nominal": 0.20e-3,           # Phenomenological interfacial coupling factor (xi / R ~ 10^-3)
+    "b_eff_nm": 3.4,                      # Effective gradient correlation length
 }
 
 # -----------------------------------------------------------------------
@@ -79,8 +83,6 @@ MATERIAL_TABLE_2 = {
         "dG_ads_type": "Model representative scenario (Han et al., ACS Appl. Bio Mater. 2020, 3:4220, DOI: 10.1021/acsabm.0c00306)",
         "Gamma_max_nm2": 0.38,
         "Gamma_max_type": "Geometric model estimate (1 / A_footprint, A_footprint ~ 2.6 nm²)",
-        "psi_s_mV": -32.4,
-        "psi_s_type": "Experimental Zeta potential (Czarniewska et al., Sci. Rep. 2023, 13:11823, DOI: 10.1038/s41598-023-38595-8)",
         "k_ext_per_h": 1.25,
         "k_ext_type": "Phenomenological kinetic parameter (diffusion-collision limit)",
         "k_des_per_h": 0.04,
@@ -94,8 +96,6 @@ MATERIAL_TABLE_2 = {
         "dG_ads_type": "Model representative scenario (Gouveia et al., ACS Appl. Bio Mater. 2020, 3:5913, DOI: 10.1021/acsabm.0c00621)",
         "Gamma_max_nm2": 0.26,
         "Gamma_max_type": "Geometric model estimate (1 / A_footprint, A_footprint ~ 3.8 nm²)",
-        "psi_s_mV": -65.0,
-        "psi_s_type": "Experimental Zeta potential of delaminated Ti3C2Tx at pH 7.4 (Alhabeb et al., Chem. Mater. 2017, 29:7633)",
         "k_ext_per_h": 0.75,
         "k_ext_type": "Phenomenological kinetic parameter",
         "k_des_per_h": 0.12,
@@ -109,8 +109,6 @@ MATERIAL_TABLE_2 = {
         "dG_ads_type": "Control baseline",
         "Gamma_max_nm2": 0.0,
         "Gamma_max_type": "N/A",
-        "psi_s_mV": 0.0,
-        "psi_s_type": "N/A",
         "k_ext_per_h": 0.0,
         "k_ext_type": "N/A",
         "k_des_per_h": 0.0,
@@ -167,28 +165,28 @@ def adsorption_equilibrium_dimensionless(phi_total, T_K, a_s_nm_inv, material="b
             break
         phi_f = phi_next
 
-    a_f = compute_thermodynamic_activity(phi_f)
-    theta_eq = (K_deg * a_f) / (1.0 + K_deg * a_f)
-    return float(phi_f), float(theta_eq), float(K_deg)
+    a_free = compute_thermodynamic_activity(phi_f)
+    theta_final = (K_deg * a_free) / (1.0 + K_deg * a_free)
+    m_ads_final = m_tilde_max * theta_final
+    return float(phi_f), float(theta_final), float(m_ads_final)
 
 def calculate_surface_energy_excess_SI(T_K, phi_dilute, phi_dense, material="borophene", eta_eff=0.20e-3):
     """
-    Derived surface free energy excess from Langmuir grand potential:
-      Delta_gamma_s = eta_eff * k_B T * Gamma_max * ln((1 + K_deg * a_dense) / (1 + K_deg * a_dilute))
-    
-    Units: [J/m² = N/m]
+    Computes Delta_gamma_s in SI units [J / m² = N / m]:
+      Delta_gamma_s = eta_eff * k_B T * Gamma_max_SI * ln[(1 + K_deg * a_dense) / (1 + K_deg * a_dilute)]
+    where Gamma_max_SI = Gamma_max_nm2 * 1e18 [m^-2].
     """
     if material not in MATERIAL_TABLE_2 or material == "control":
         return 0.0
 
-    mat = MATERIAL_TABLE_2[material]
-    dG = mat["dG_ads_kcal_mol"]
-    Gamma_max_m2 = mat["Gamma_max_nm2"] * 1e18 # nm^-2 -> m^-2
-    K_deg = np.exp(-dG / (R_GAS_KCAL * T_K))
+    dG = MATERIAL_TABLE_2[material]["dG_ads_kcal_mol"]
+    Gamma_max_nm2 = MATERIAL_TABLE_2[material]["Gamma_max_nm2"]
+    Gamma_max_SI = Gamma_max_nm2 * 1.0e18 # molecules / m²
 
+    K_deg = np.exp(-dG / (R_GAS_KCAL * T_K))
     a_dilute = compute_thermodynamic_activity(phi_dilute)
     a_dense  = compute_thermodynamic_activity(phi_dense)
 
-    term = (1.0 + K_deg * a_dense) / (1.0 + K_deg * a_dilute)
-    delta_gamma = eta_eff * (KB_J * T_K) * Gamma_max_m2 * np.log(max(1.0, term))
-    return float(delta_gamma)
+    ratio = (1.0 + K_deg * a_dense) / (1.0 + K_deg * a_dilute)
+    Delta_gamma_SI = eta_eff * (KB_J * T_K) * Gamma_max_SI * np.log(max(1.0, ratio))
+    return float(Delta_gamma_SI)

@@ -31,6 +31,24 @@ jobs:
       run: |
         pytest tests/ -v
 
-    - name: Test execution pipeline
+    - name: Verify imports and core module loading
       run: |
-        python run_pipeline.py
+        python -c "
+from src.thermodynamics.material_parameters import (
+    calculate_m_tilde_max, compute_thermodynamic_activity,
+    adsorption_equilibrium_dimensionless, TAU_K18_SYSTEM
+)
+from src.thermodynamics.flory_huggins_voorn_overbeek import FloryHugginsVoornOverbeek
+from src.thermodynamics.cahn_hilliard_wetting import CahnHilliardWetting
+from src.kinetics.condensate_aging_kinetics import CondensateAgingKinetics
+import pandas as pd, numpy as np, scipy, matplotlib
+print('All imports OK. pandas version:', pd.__version__)
+fh = FloryHugginsVoornOverbeek()
+tc = fh.calculate_apparent_cloud_point(a_s_nm_inv=0.0, phi_total=0.095)
+assert 14.5 < tc < 16.5, f'Cloud point {tc:.2f} out of expected range'
+print(f'Cloud point check passed: T_cloud = {tc:.2f} C')
+"
+
+  # Note: Full figure generation (Sobol N_base=512, 5120 evaluations) runs locally
+  # via: python run_pipeline.py
+  # CI only runs the fast unit test suite and import verification to keep build times < 5 min.
