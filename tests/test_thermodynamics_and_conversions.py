@@ -141,6 +141,23 @@ def test_thermodynamic_parameter_sensitivities():
     assert tc_I != tc_base
 
 
+import pandas as pd
+
+
+def test_digitized_experimental_data_integrity():
+    """Verify that Ambadipudi 2017 digitized CSV loads properly with pandas and has correct structure."""
+    csv_path = os.path.join(os.path.dirname(__file__), "../data/ambadipudi_2017_fig2b_K18_pH8p8.csv")
+    assert os.path.exists(csv_path), f"Dataset CSV not found at {csv_path}"
+    df = pd.read_csv(csv_path, comment="#")
+    assert len(df) == 11
+    assert "temperature_C" in df.columns
+    assert "A350_normalized" in df.columns
+    assert "digitization_uncertainty" in df.columns
+    assert df["A350_normalized"].max() <= 1.05
+    assert df["temperature_C"].min() >= 5.0
+    assert df["temperature_C"].max() <= 50.0
+
+
 def test_kinetic_mass_conservation():
     """Verify exact algebraic mass conservation in condensate aging master equations."""
     kin = CondensateAgingKinetics()
@@ -158,5 +175,7 @@ if __name__ == "__main__":
     test_material_dissolution_and_depletion_thresholds()
     test_exact_young_wetting_identity_and_closure()
     test_thermodynamic_parameter_sensitivities()
+    test_digitized_experimental_data_integrity()
     test_kinetic_mass_conservation()
     print("All comprehensive unit tests passed successfully!")
+
