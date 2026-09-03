@@ -67,3 +67,6 @@ scratch/*.tmp
 # Production publication masters (TIFF >100MB)
 *.tif
 *.tiff
+
+# Regenerable RSC portal upload bundle (built by scratch/build_submission_package.py)
+submission/upload/

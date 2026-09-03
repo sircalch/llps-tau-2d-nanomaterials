@@ -245,10 +245,9 @@ def build_official_manuscript():
         "temperatures and depleting ~60% free monomer at 37 °C. In contrast, a moderate-affinity Ti3C2Tx MXene-like scenario "
         "(ΔG_ads = -5.2 kcal/mol, θ_c = 79.3°) produces modest depletion, maintaining stable droplet coexistence. Within a kinetic "
         "formulation that holds the intrinsic aggregation rate-law structure fixed, interfacial sequestration delays "
-        "secondary-nucleation-driven aging. A converged variance-based sensitivity analysis shows that the apparent cloud "
-        "point responds near-additively to all six active parameters, with the bulk-LCST slope β and critical temperature Tc "
-        "and the interfacial terms ΔG_ads and a_s contributing comparably, whereas fibrillation arrest is governed almost "
-        "entirely by area density a_s and extraction rate k_ext."
+        "secondary-nucleation-driven aging. A converged global sensitivity analysis shows the apparent cloud point depending "
+        "near-additively and comparably on the bulk-LCST parameters (β, Tc) and the interfacial parameters (ΔG_ads, a_s), "
+        "whereas fibrillation arrest is governed almost entirely by area density a_s and extraction rate k_ext."
     )
     r_abst.font.size = Pt(9.5)
     p_abs.paragraph_format.space_after = Pt(14)
@@ -480,7 +479,7 @@ def build_official_manuscript():
     body("All simulation scripts, thermodynamic root solvers, kinetic master equation integrators, digitized experimental literature data, and unit test suites are openly available in the project GitHub repository (https://github.com/sircalch/llps-tau-2d-nanomaterials) under the MIT License and supported by automated continuous integration. The exact version reported here is permanently archived on Zenodo: https://doi.org/10.5281/zenodo.22268507 (release v1.0.1). Running python run_pipeline.py regenerates the full unit-test suite, every figure, this manuscript, and the cover letter from source.")
 
     h1("Acknowledgements")
-    body("The authors acknowledge financial and infrastructural support from Universidad Estatal de Sonora (UES) and Universidad de Sonora (UNISON). Generative AI Disclosure: During the preparation of this computational study, generative AI assistance (OpenAI Codex / Anthropic Claude / Google Gemini) was utilized for code review, unit test generation, and manuscript formatting. All mathematical models, numerical simulations, physical interpretations, and bibliographic citations were independently verified and finalized under full author responsibility.")
+    body("The authors acknowledge financial and infrastructural support from Universidad Estatal de Sonora (UES) and Universidad de Sonora (UNISON). Generative AI Disclosure: during the preparation of this computational study, generative AI assistance (OpenAI Codex / Anthropic Claude / Google Gemini) was used for code review, unit-test generation, and manuscript formatting; all mathematical models, numerical simulations, physical interpretations, and bibliographic citations were independently verified and finalized under full author responsibility. All figures, including the graphical abstract, were produced deterministically from the authors' own Python (matplotlib) code and contain no AI-generated imagery.")
 
     # References
     h1("References")

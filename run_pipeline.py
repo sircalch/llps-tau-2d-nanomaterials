@@ -37,6 +37,9 @@ def main():
     # 5. Compile Cover Letter
     run_step("scratch/build_cover_letter.py", "Step 5: Compiling official Cover Letter for Soft Matter")
 
+    # 5b. Assemble the RSC submission upload bundle
+    run_step("scratch/build_submission_package.py", "Step 5b: Assembling submission/upload/ bundle for the RSC portal")
+
     # 6. Package distribution archive
     print(f"\n{'='*70}\n>> Step 6: Building distribution ZIP package\n{'='*70}")
     zip_name = 'PAQUETE_PROYECTO_LLPS_TAU_2D_NANOMATERIALS.zip'
