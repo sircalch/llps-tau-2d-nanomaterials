@@ -10,7 +10,8 @@ from src.kinetics.condensate_aging_kinetics import CondensateAgingKinetics
 
 PARAM_NAMES = ['N_eff', 'beta', 'Tc_K', 'dG_ads', 'a_s', 'I_M', 'eta_eff', 'k_ext']
 D = len(PARAM_NAMES)
-N_BASE = 512
+N_BASE = 1024
+CONV_BLOCKS = [128, 256, 512, 1024]  # nested dyadic sub-blocks for the convergence table
 
 BOUNDS = [
     [6.0, 18.0],
@@ -32,8 +33,10 @@ problem = {
 def eval_single(row):
     Nv, bv, Tv, dGv, asv, Iv, etv, kv = row
     fh = FloryHugginsVoornOverbeek(N=Nv, Tc_K=Tv, beta=bv)
+    # Continuous solver: returns a smoothly extrapolated crossing when the root lies
+    # outside the [Tc, 65 degC] window, so Y_Tc has no clamp-induced discontinuity.
     tc = fh.calculate_apparent_cloud_point(a_s_nm_inv=asv, dG_ads=dGv, I_M=Iv, Gamma_max=0.38)
-    tc_val = tc if tc is not None else 65.0
+    tc_val = float(tc)
     kin = CondensateAgingKinetics(k_extract=kv)
     res = kin.simulate(t_span=(0, 24), phi_0=0.60, a_s_nm_inv=asv)
     return tc_val, res['M_final']
@@ -57,10 +60,10 @@ def main():
     Y_M  = np.array([r[1] for r in results])
 
     os.makedirs('data', exist_ok=True)
-    np.savez_compressed('data/sobol_evaluations_N512.npz', param_values=param_values, Y_Tc=Y_Tc, Y_M=Y_M)
-    print('Saved raw evaluations to data/sobol_evaluations_N512.npz')
+    np.savez_compressed('data/sobol_evaluations_N1024.npz', param_values=param_values, Y_Tc=Y_Tc, Y_M=Y_M)
+    print('Saved raw evaluations to data/sobol_evaluations_N1024.npz')
 
-    print('Running SALib Sobol sensitivity analysis for N_base=512 (1000 bootstrap resamples, 95% CI)...')
+    print(f'Running SALib Sobol sensitivity analysis for N_base={N_BASE} (1000 bootstrap resamples, 95% CI)...')
     si_Tc = sobol_analyze.analyze(problem, Y_Tc, calc_second_order=False, num_resamples=1000, conf_level=0.95, seed=42)
     si_M  = sobol_analyze.analyze(problem, Y_M,  calc_second_order=False, num_resamples=1000, conf_level=0.95, seed=42)
 
@@ -75,13 +78,13 @@ def main():
         'ST_M_final':      np.round(si_M['ST'], 4),
         'ST_conf_M_final': np.round(si_M['ST_conf'], 4),
     })
-    df_main.to_csv('data/sobol_indices_N512.csv', index=False)
-    print('\n=== SALIB SOBOL INDICES (N_base=512, D=8, N_eval=5120) ===')
+    df_main.to_csv('data/sobol_indices_N1024.csv', index=False)
+    print(f'\n=== SALIB SOBOL INDICES (N_base={N_BASE}, D={D}, N_eval={param_values.shape[0]}) ===')
     print(df_main.to_string(index=False))
 
-    print('\nComputing rigorous block convergence curves for N in [64, 128, 256, 512] from real evaluations...')
+    print(f'\nComputing rigorous block convergence curves for N in {CONV_BLOCKS} from real evaluations...')
     conv_rows = []
-    n_blocks = [64, 128, 256, 512]
+    n_blocks = CONV_BLOCKS
     step = D + 2
     for n in n_blocks:
         n_rows = n * step
@@ -106,8 +109,8 @@ def main():
             })
 
     df_conv = pd.DataFrame(conv_rows)
-    df_conv.to_csv('data/sobol_convergence_N512.csv', index=False)
-    print('Successfully generated data/sobol_convergence_N512.csv from actual sub-block analysis.')
+    df_conv.to_csv('data/sobol_convergence_N1024.csv', index=False)
+    print('Successfully generated data/sobol_convergence_N1024.csv from actual sub-block analysis.')
     print(f'Total rows in convergence CSV: {len(df_conv)}')
 
 if __name__ == '__main__':

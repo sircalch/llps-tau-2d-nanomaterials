@@ -194,10 +194,25 @@ class FloryHugginsVoornOverbeek:
         sp2 = float(grid2[idx2[0]]) if len(idx2) > 0 else None
         return sp1, sp2
 
-    def calculate_apparent_cloud_point(self, a_s_nm_inv=0.0, material="borophene", phi_total=0.095, I_M=0.155, dG_ads=None, Gamma_max=None):
+    def calculate_apparent_cloud_point(self, a_s_nm_inv=0.0, material="borophene", phi_total=0.095,
+                                       I_M=0.155, dG_ads=None, Gamma_max=None,
+                                       t_max=65.0, extrapolate=True):
         """
-        Solves the TRUE thermodynamic apparent cloud point T_cloud^app (in °C) via Brent's method:
-          g(T) = phi_dilute(T, N, Tc, beta, I) - phi_free(T, a_s, dG) = 0.
+        Solves the thermodynamic apparent cloud point T_cloud^app (in °C) from
+          g(T) = phi_dilute(T, N, Tc, beta, I) - phi_free(T, a_s, dG_ads) = 0
+
+        g(T) is strictly monotone decreasing in T (the dilute binodal falls and the
+        adsorption-limited free monomer rises with T), so there is exactly one root.
+        Inside [Tc + 0.1 degC, t_max] the root is bracketed and refined with Brent's method.
+
+        When the root lies outside that window the function does NOT clamp to a constant
+        (which injected an artificial discontinuity into the variance-based sensitivity
+        analysis). With ``extrapolate=True`` (default) it linearly extends g(T) from its
+        two nearest evaluated points and returns the extrapolated crossing:
+          * g < 0 across the whole window  -> condensate stable even at Tc: root below the window
+          * g > 0 across the whole window  -> fully dissolved up to t_max: root above the window
+        The returned value is therefore a smooth, monotone function of every input
+        parameter. ``extrapolate=False`` restores the legacy behaviour (returns t_min or None).
         """
         if dG_ads is None:
             dG_ads = MATERIAL_TABLE_2[material]["dG_ads_kcal_mol"] if material in MATERIAL_TABLE_2 else -7.8
@@ -207,30 +222,54 @@ class FloryHugginsVoornOverbeek:
         c_max_uM = (a_s_nm_inv * Gamma_max * 1e30) / 6.022e23
         m_max = 9.5e-4 * c_max_uM
 
-        def obj(T_C):
-            T_K = T_C + 273.15
-            b1, _ = self.find_binodal_coexistence(T_K, I_M=I_M)
-            if b1 is None:
-                return 1.0 # Homogeneous single phase at low T
+        def phi_free(T_K):
             K_deg = np.exp(-dG_ads / (R_GAS_KCAL * T_K))
             pf = phi_total
-            for _ in range(30):
+            for _ in range(60):
                 af = (pf / 9.5e-4) / 1e6
                 th = (K_deg * af) / (1.0 + K_deg * af)
-                pf = max(1e-12, phi_total - m_max * th)
-            return b1 - pf
+                pf_new = max(1e-12, phi_total - m_max * th)
+                if abs(pf_new - pf) < 1e-14:
+                    break
+                pf = pf_new
+            return pf
+
+        def has_binodal(T_C):
+            return self.find_binodal_coexistence(T_C + 273.15, I_M=I_M)[0] is not None
+
+        def obj(T_C):
+            b1, _ = self.find_binodal_coexistence(T_C + 273.15, I_M=I_M)
+            if b1 is None:
+                return 1.0  # below the LCST: homogeneous, cloud point not yet reached
+            return b1 - phi_free(T_C + 273.15)
 
         t_min = self.Tc_K - 273.15 + 0.1
-        t_max = 65.0
-        f_min = obj(t_min)
-        f_max = obj(t_max)
 
-        if f_min * f_max > 0:
-            if f_min < 0:
-                return float(t_min)
-            else:
-                return None # Fully dissolved across the entire thermal window
+        T_grid = np.linspace(t_min, t_max, 40)
+        g_grid = np.array([obj(t) for t in T_grid])
+        sign_change = np.where(np.diff(np.sign(g_grid)) != 0)[0]
 
-        sol = root_scalar(obj, bracket=[t_min, t_max], method='brentq', xtol=0.01)
-        return float(sol.root)
+        if len(sign_change) > 0:
+            i = int(sign_change[0])
+            sol = root_scalar(obj, bracket=[T_grid[i], T_grid[i + 1]], method='brentq', xtol=5e-3)
+            return float(sol.root)
+
+        if not extrapolate:
+            return float(t_min) if g_grid[0] < 0 else None
+
+        if g_grid[-1] < 0:
+            # Condensate stable throughout the window: extrapolate backward from the two
+            # lowest-T points that still possess a defined binodal.
+            valid = [k for k in range(len(T_grid)) if has_binodal(T_grid[k])]
+            i0, i1 = valid[0], valid[1]
+        else:
+            # Fully dissolved throughout the window: extrapolate forward from the top two points.
+            i0, i1 = len(T_grid) - 2, len(T_grid) - 1
+
+        T0, T1 = float(T_grid[i0]), float(T_grid[i1])
+        g0, g1 = obj(T0), obj(T1)
+        slope = (g1 - g0) / (T1 - T0)
+        if abs(slope) < 1e-12:
+            return float(t_min - 50.0) if g_grid[-1] < 0 else float(t_max + 50.0)
+        return float(np.clip(T1 - g1 / slope, -80.0, 400.0))
 

@@ -423,7 +423,8 @@ def generate_figure_5():
         r"Anchor $\eta_{eff}$", r"Extr. $k_{ext}$"
     ]
     D = len(PARAM_NAMES)
-    N_base = 512  # 512 * (D+2) = 5120 physical evaluations; scrambled Sobol, seed=42, Jansen estimator
+    N_base = 1024  # 1024 * (D+2) = 10240 physical evaluations; scrambled Sobol, seed=42, Jansen estimator
+    N_eval = N_base * (D + 2)
 
     BOUNDS = [
         [6.0, 18.0], [0.005, 0.015], [275.15, 287.15],
@@ -431,8 +432,8 @@ def generate_figure_5():
         [0.10e-3, 0.35e-3], [0.20, 2.50]
     ]
 
-    csv_indices = "data/sobol_indices_N512.csv"
-    csv_conv = "data/sobol_convergence_N512.csv"
+    csv_indices = "data/sobol_indices_N1024.csv"
+    csv_conv = "data/sobol_convergence_N1024.csv"
 
     if os.path.exists(csv_indices):
         print(f"Loading Sobol indices directly from {csv_indices}...")
@@ -458,18 +459,18 @@ def generate_figure_5():
     ax.bar(x + w/2, ST_Tc, w, yerr=ST_conf_Tc, capsize=3, error_kw={'elinewidth': 1.0, 'ecolor': '#1E3A8A'}, label=r"Total-Effect $S_{Ti}$", color='#93C5FD', ec='#2563EB')
     ax.set_xticks(x); ax.set_xticklabels(PARAM_DESCRIP, rotation=35, ha='right', fontsize=8.5)
     ax.set_ylabel("Sobol Index", fontsize=10.0, fontweight='bold')
-    ax.set_title(r"(a) Sobol Indices: Apparent Cloud Point $T_{cloud}^{app}$" + "\n" + r"($N_{base}=512$, $D=8$, $N_{eval}=5120$, Saltelli et al. / SALib, 95% CI)", fontsize=10.5, fontweight='bold')
-    ax.set_ylim(-0.10, 1.0); ax.grid(True, ls=':', alpha=0.45, axis='y'); ax.legend(fontsize=8.2)
+    ax.set_title(r"(a) Sobol Indices: Apparent Cloud Point $T_{cloud}^{app}$" + "\n" + rf"($N_{{base}}={N_base}$, $D={D}$, $N_{{eval}}={N_eval}$, Saltelli et al. / SALib, 95% CI)", fontsize=10.5, fontweight='bold')
+    ax.set_ylim(-0.05, 0.40); ax.grid(True, ls=':', alpha=0.45, axis='y'); ax.legend(fontsize=8.2)
 
     ax = axes[0, 1]
     ax.bar(x - w/2, S1_M, w, yerr=S1_conf_M, capsize=3, error_kw={'elinewidth': 1.0, 'ecolor': '#064E3B'}, label=r"First-Order $S_i$", color='#10B981', ec='#047857')
     ax.bar(x + w/2, ST_M, w, yerr=ST_conf_M, capsize=3, error_kw={'elinewidth': 1.0, 'ecolor': '#064E3B'}, label=r"Total-Effect $S_{Ti}$", color='#A7F3D0', ec='#059669')
     ax.set_xticks(x); ax.set_xticklabels(PARAM_DESCRIP, rotation=35, ha='right', fontsize=8.5)
     ax.set_ylabel("Sobol Index", fontsize=10.0, fontweight='bold')
-    ax.set_title(r"(b) Sobol Indices: Fibrillation Mass $M_{final}$" + "\n" + r"($N_{base}=512$, Saltelli et al. / SALib, 95% CI)", fontsize=10.5, fontweight='bold')
+    ax.set_title(r"(b) Sobol Indices: Fibrillation Mass $M_{final}$" + "\n" + rf"($N_{{base}}={N_base}$, Saltelli et al. / SALib, 95% CI)", fontsize=10.5, fontweight='bold')
     ax.set_ylim(0, 1.10); ax.grid(True, ls=':', alpha=0.45, axis='y'); ax.legend(fontsize=8.2)
 
-    N_steps = [64, 128, 256, 512]  # Convergence sub-blocks
+    N_steps = [128, 256, 512, 1024]  # Convergence sub-blocks
     colors_p = plt.cm.tab10(np.linspace(0, 0.9, D))
 
     ax_c1 = axes[1, 0]; ax_c2 = axes[1, 1]

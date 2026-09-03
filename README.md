@@ -15,7 +15,7 @@ This repository contains the statistical-thermodynamic, Cahn-Hilliard interfacia
 * **Adsorption-Driven Monomer Depletion at 37 °C:** Stabilized Borophene ($\Delta G_{\text{ads}} = -7.8\text{ kcal/mol}$, $100\ \mu\text{g/mL}$) shifts the apparent cloud point to $T_{\text{cloud}}^{\text{app}} \approx 29.4^\circ\text{C}$ and depletes free monomer to $c_{\text{free}} \approx 41.4\ \mu\text{M}$ (~60% depletion) at $37^\circ\text{C}$. LLPS is dissolved at $T \le 29.4^\circ\text{C}$ but remains active at $37^\circ\text{C}$. $\text{Ti}_3\text{C}_2\text{T}_x$ MXene ($\Delta G_{\text{ads}} = -5.2\text{ kcal/mol}$) produces partial depletion ($c_{\text{free}} \approx 87.6\ \mu\text{M}$ at $100\ \mu\text{g/mL}$, $T_{\text{cloud}}^{\text{app}} \approx 17.8^\circ\text{C}$), maintaining stable droplets.
 * **Cahn-Hilliard Wetting:** Derived Young contact angles ($\theta_c = 50.3^\circ$ for Borophene vs $79.3^\circ$ for MXene) under a unified continuum energy-density scale $f_0 = 1.50\times 10^4\text{ J/m}^3$ ($\gamma_{LL} = 1.60\ \mu\text{N/m}$).
 * **Condensate Aging Kinetics:** Mass-conserving master equations ($\max |\Delta M| < 10^{-14}$) evaluating secondary nucleation retardation under dimensional fluxes.
-* **Global Sensitivity Analysis:** Saltelli-Jansen Sobol variance decomposition ($N_{\text{base}} = 512$, $D = 8$, $N_{\text{eval}} = 5120$; scrambled Sobol seed=42, Jansen estimator) with block convergence verified across $N \in \{64, 128, 256, 512\}$.
+* **Global Sensitivity Analysis:** Saltelli-Jansen Sobol variance decomposition ($N_{\text{base}} = 1024$, $D = 8$, $N_{\text{eval}} = 10240$; scrambled Sobol seed=42, Jansen estimator) with block convergence verified across $N \in \{128, 256, 512, 1024\}$. The cloud-point solver extrapolates smoothly outside the thermal evaluation window so the sensitivity response carries no clamp discontinuity.
 
 ---
 
@@ -35,9 +35,9 @@ llps-tau-2d-nanomaterials/
 │   └── TOC_Graphic_RSC_Soft_Matter.*              # 8 cm x 4 cm table-of-contents graphic
 ├── data/
 │   ├── ambadipudi_2017_fig2b_K18_pH8p8.csv         # Digitized experimental turbidity (Ambadipudi 2017)
-│   ├── sobol_indices_N512.csv                      # Sobol S1 / ST with 95% bootstrap CI
-│   ├── sobol_convergence_N512.csv                  # Dyadic sub-block convergence table
-│   └── sobol_evaluations_N512.npz                  # Raw 5120 physical model evaluations
+│   ├── sobol_indices_N1024.csv                      # Sobol S1 / ST with 95% bootstrap CI
+│   ├── sobol_convergence_N1024.csv                  # Dyadic sub-block convergence table
+│   └── sobol_evaluations_N1024.npz                  # Raw 10240 physical model evaluations
 ├── src/
 │   ├── thermodynamics/
 │   │   ├── material_parameters.py                  # Audited biological & material constants
@@ -49,7 +49,7 @@ llps-tau-2d-nanomaterials/
 │       ├── generate_master_figures.py              # Figures 1-5 (PNG 300 dpi / PDF / TIFF 600 dpi)
 │       └── generate_rsc_toc.py                     # RSC TOC graphic renderer
 ├── scratch/
-│   ├── run_salib_sobol.py                          # Regenerates data/sobol_*  (heavy: 5120 evals)
+│   ├── run_salib_sobol.py                          # Regenerates data/sobol_*  (heavy: 10240 evals)
 │   ├── build_single_master_manuscript.py           # Compiles the master DOCX
 │   └── build_cover_letter.py                       # Compiles the cover letter
 ├── tests/
@@ -95,7 +95,7 @@ pytest tests/
 
 The Sobol datasets in `data/` are committed so the pipeline and figures are fully
 reproducible without a long recompute. To regenerate them from scratch
-(5120 physical model evaluations, parallelised; several minutes):
+(10240 physical model evaluations, parallelised; several minutes):
 
 ```bash
 python scratch/run_salib_sobol.py

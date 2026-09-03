@@ -170,7 +170,7 @@ def test_kinetic_mass_conservation():
 
 def test_sobol_indices_dataset_integrity():
     """Verify that SALib Sobol sensitivity datasets exist, satisfy physical bounds, structural zeros, and S1 <= ST."""
-    sobol_path = os.path.join(os.path.dirname(__file__), "../data/sobol_indices_N512.csv")
+    sobol_path = os.path.join(os.path.dirname(__file__), "../data/sobol_indices_N1024.csv")
     assert os.path.exists(sobol_path), f"Sobol indices CSV not found at {sobol_path}"
     df_sobol = pd.read_csv(sobol_path).set_index("parameter")
     assert len(df_sobol) == 8, "Expected 8 parameters in Sobol index table"
@@ -207,10 +207,10 @@ def test_sobol_indices_dataset_integrity():
     assert df_sobol.loc["k_ext", "ST_M_final"] > 0.05
 
     # 4. Verify convergence table
-    conv_path = os.path.join(os.path.dirname(__file__), "../data/sobol_convergence_N512.csv")
+    conv_path = os.path.join(os.path.dirname(__file__), "../data/sobol_convergence_N1024.csv")
     assert os.path.exists(conv_path), f"Sobol convergence CSV not found at {conv_path}"
     df_conv = pd.read_csv(conv_path)
-    assert set(df_conv["N_base"].unique()) == {64, 128, 256, 512}
+    assert set(df_conv["N_base"].unique()) == {128, 256, 512, 1024}
     assert len(df_conv) == 32  # 4 blocks x 8 parameters
 
 
@@ -239,33 +239,34 @@ def test_salib_ishigami_benchmark():
 
 
 def test_sobol_prefix_consistency_and_shapes():
-    """Verify SALib interleaved stride step=D+2, prefix shapes, and that N=512 convergence reproduces main dataset."""
-    eval_path = os.path.join(os.path.dirname(__file__), "../data/sobol_evaluations_N512.npz")
+    """Verify SALib interleaved stride step=D+2, prefix shapes, and that the top sub-block reproduces the main dataset."""
+    eval_path = os.path.join(os.path.dirname(__file__), "../data/sobol_evaluations_N1024.npz")
     assert os.path.exists(eval_path), f"Sobol evaluations archive not found at {eval_path}"
     raw = np.load(eval_path)
     Y_Tc, Y_M = raw['Y_Tc'], raw['Y_M']
 
     D = 8
     step = D + 2  # 10
-    assert len(Y_Tc) == 512 * step
-    assert len(Y_M) == 512 * step
+    N_BASE = 1024
+    assert len(Y_Tc) == N_BASE * step
+    assert len(Y_M) == N_BASE * step
 
     # Verify sub-block shapes
-    for n in [64, 128, 256, 512]:
+    for n in [128, 256, 512, 1024]:
         expected_rows = n * step
         assert len(Y_Tc[:expected_rows]) == expected_rows
         assert len(Y_M[:expected_rows]) == expected_rows
 
-    # Verify that convergence row at N=512 matches main indices to <= 1e-4
-    csv_main = pd.read_csv(os.path.join(os.path.dirname(__file__), "../data/sobol_indices_N512.csv")).set_index("parameter")
-    csv_conv = pd.read_csv(os.path.join(os.path.dirname(__file__), "../data/sobol_convergence_N512.csv"))
-    df_conv_512 = csv_conv[csv_conv["N_base"] == 512].set_index("parameter")
+    # Verify that the top convergence sub-block (N = N_base) reproduces the main indices
+    csv_main = pd.read_csv(os.path.join(os.path.dirname(__file__), "../data/sobol_indices_N1024.csv")).set_index("parameter")
+    csv_conv = pd.read_csv(os.path.join(os.path.dirname(__file__), "../data/sobol_convergence_N1024.csv"))
+    df_conv_top = csv_conv[csv_conv["N_base"] == N_BASE].set_index("parameter")
 
     for p in csv_main.index:
-        assert abs(csv_main.loc[p, "ST_Tcloud"] - df_conv_512.loc[p, "ST_Tcloud"]) < 1e-4
-        assert abs(csv_main.loc[p, "ST_M_final"] - df_conv_512.loc[p, "ST_M_final"]) < 1e-4
-        assert abs(csv_main.loc[p, "S1_Tcloud"] - df_conv_512.loc[p, "S1_Tcloud"]) < 1e-4
-        assert abs(csv_main.loc[p, "S1_M_final"] - df_conv_512.loc[p, "S1_M_final"]) < 1e-4
+        assert abs(csv_main.loc[p, "ST_Tcloud"] - df_conv_top.loc[p, "ST_Tcloud"]) < 1e-4
+        assert abs(csv_main.loc[p, "ST_M_final"] - df_conv_top.loc[p, "ST_M_final"]) < 1e-4
+        assert abs(csv_main.loc[p, "S1_Tcloud"] - df_conv_top.loc[p, "S1_Tcloud"]) < 1e-4
+        assert abs(csv_main.loc[p, "S1_M_final"] - df_conv_top.loc[p, "S1_M_final"]) < 1e-4
 
 
 if __name__ == "__main__":
