@@ -36,6 +36,7 @@ Comprehensive Physical and Bibliographic Ledger:
 """
 
 import os
+import pandas as pd
 from docx import Document
 from docx.shared import Inches, Pt, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -52,6 +53,8 @@ def set_cell_margins(cell, top=100, bottom=100, left=140, right=140):
     tcPr = cell._tc.get_or_add_tcPr()
     tcMar = parse_xml(f'<w:tcMar {nsdecls("w")}><w:top w:w="{top}" w:type="dxa"/><w:bottom w:w="{bottom}" w:type="dxa"/><w:left w:w="{left}" w:type="dxa"/><w:right w:w="{right}" w:type="dxa"/></w:tcMar>')
     tcPr.append(tcMar)
+
+TITLE = "Thermodynamic modulation of Tau liquid-liquid phase separation and condensate wetting by two-dimensional nanomaterial interfaces: emergent suppression via adsorption equilibrium"
 
 AUTHORS = [
     ("Andrés Monreal Hernández", "1,*"),
@@ -102,6 +105,24 @@ AUDITED_REFERENCES = [
 ]
 
 def build_official_manuscript():
+    # Dynamically read Sobol indices from CSV
+    csv_sobol = "data/sobol_indices_N512.csv"
+    if os.path.exists(csv_sobol):
+        df_sobol = pd.read_csv(csv_sobol).set_index("parameter")
+        st_beta = float(df_sobol.loc["beta", "ST_Tcloud"])      # 0.5578
+        st_I = float(df_sobol.loc["I_M", "ST_Tcloud"])          # 0.5079
+        st_N = float(df_sobol.loc["N_eff", "ST_Tcloud"])        # 0.4730
+        st_Tc = float(df_sobol.loc["Tc_K", "ST_Tcloud"])        # 0.2837
+        st_dG = float(df_sobol.loc["dG_ads", "ST_Tcloud"])      # 0.1001
+        st_as_tc = float(df_sobol.loc["a_s", "ST_Tcloud"])      # 0.0822
+        s1_as_m = float(df_sobol.loc["a_s", "S1_M_final"])      # 0.5588
+        st_as_m = float(df_sobol.loc["a_s", "ST_M_final"])      # 0.9146
+        st_kext_m = float(df_sobol.loc["k_ext", "ST_M_final"])  # 0.1185
+    else:
+        st_beta, st_I, st_N, st_Tc = 0.56, 0.51, 0.47, 0.28
+        st_dG, st_as_tc = 0.10, 0.08
+        s1_as_m, st_as_m, st_kext_m = 0.56, 0.91, 0.12
+
     doc = Document()
     for s in doc.sections:
         s.top_margin = Inches(1.0); s.bottom_margin = Inches(1.0)
@@ -138,72 +159,70 @@ def build_official_manuscript():
         p.paragraph_format.space_before = Pt(3); p.paragraph_format.space_after = Pt(5)
         return p
 
-    def fig(path, cap_bold, cap_text, w=6.1):
+    def fig(path, num_label, cap):
         if os.path.exists(path):
-            p = doc.add_paragraph()
-            p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            p.paragraph_format.space_before = Pt(8)
-            p.add_run().add_picture(path, width=Inches(w))
-        pc = doc.add_paragraph()
-        pc.paragraph_format.space_before = Pt(2); pc.paragraph_format.space_after = Pt(10)
-        rb = pc.add_run(cap_bold + " "); rb.font.bold = True; rb.font.size = Pt(8.8)
-        rc = pc.add_run(cap_text); rc.font.size = Pt(8.5)
-        rc.font.color.rgb = RGBColor(0x37, 0x41, 0x51)
+            p_img = doc.add_paragraph()
+            p_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
+            p_img.paragraph_format.space_before = Pt(6); p_img.paragraph_format.space_after = Pt(3)
+            doc.add_picture(path, width=Inches(6.2))
+        p_cap = doc.add_paragraph()
+        p_cap.paragraph_format.space_before = Pt(2); p_cap.paragraph_format.space_after = Pt(8)
+        r_num = p_cap.add_run(f"{num_label} ")
+        r_num.font.bold = True; r_num.font.size = Pt(8.8)
+        r_txt = p_cap.add_run(cap)
+        r_txt.font.size = Pt(8.8)
+        return p_cap
 
-    # Title
-    pt = doc.add_paragraph()
-    rt = pt.add_run(
-        "Thermodynamic modulation of Tau liquid-liquid phase separation and condensate "
-        "wetting by two-dimensional nanomaterial interfaces: emergent suppression via "
-        "adsorption equilibrium")
-    rt.font.name = 'Arial'; rt.font.size = Pt(15); rt.font.bold = True
-    pt.paragraph_format.space_after = Pt(6)
+    p_title = doc.add_paragraph()
+    r_title = p_title.add_run(TITLE)
+    r_title.font.name = 'Arial'; r_title.font.size = Pt(16); r_title.font.bold = True
+    p_title.paragraph_format.space_after = Pt(8)
 
-    # Authors
-    pa = doc.add_paragraph()
-    for i, (name, sup) in enumerate(AUTHORS):
-        pa.add_run(name).font.bold = True
-        pa.add_run(sup).font.superscript = True
-        if i < len(AUTHORS) - 1:
-            pa.add_run(", ")
-    pa.paragraph_format.space_after = Pt(4)
+    p_auth = doc.add_paragraph()
+    for idx, (name, affil_num) in enumerate(AUTHORS):
+        r_name = p_auth.add_run(name)
+        r_name.font.bold = True; r_name.font.size = Pt(9.5)
+        r_sup = p_auth.add_run(affil_num)
+        r_sup.font.superscript = True; r_sup.font.size = Pt(9.5)
+        if idx < len(AUTHORS) - 1:
+            p_auth.add_run(", ")
+    p_auth.paragraph_format.space_after = Pt(4)
 
-    # Affiliations
-    for i, aff in enumerate(AFFILIATIONS):
-        p_af = doc.add_paragraph()
-        p_af.add_run(f"{i+1} ").font.superscript = True
-        p_af.add_run(aff).font.size = Pt(8.5)
-        p_af.paragraph_format.space_after = Pt(1)
+    for idx, aff in enumerate(AFFILIATIONS, 1):
+        p_aff = doc.add_paragraph()
+        p_aff.paragraph_format.space_after = Pt(1.5)
+        r_idx = p_aff.add_run(f"{idx} ")
+        r_idx.font.superscript = True; r_idx.font.size = Pt(8.0)
+        r_aff = p_aff.add_run(aff)
+        r_aff.font.italic = True; r_aff.font.size = Pt(8.0)
 
     p_corr = doc.add_paragraph()
-    p_corr.add_run(f"*email: {CORR_EMAIL}").font.size = Pt(8.5)
-    p_corr.paragraph_format.space_after = Pt(12)
+    p_corr.paragraph_format.space_after = Pt(10)
+    r_corrh = p_corr.add_run("* Correspondence: ")
+    r_corrh.font.bold = True; r_corrh.font.size = Pt(8.0)
+    r_corrt = p_corr.add_run(CORR_EMAIL)
+    r_corrt.font.size = Pt(8.0)
 
-    # Graphical Abstract
-    fig("figures/Graphical_Abstract.png",
-        "Graphical Abstract.",
-        "2D nanomaterial interfaces (borophene, MXene) sequester soluble Tau monomers via adsorption equilibrium, moving the system state point relative to the bulk LCST coexistence boundary and suppressing secondary nucleation within the explored parameter regime.")
-
-    # Abstract
     p_abs = doc.add_paragraph()
-    p_abs.add_run("ABSTRACT\n").font.bold = True
-    p_abs.add_run(
-        "Liquid-liquid phase separation (LLPS) of the intrinsically disordered protein Tau drives the "
-        "formation of reversible biomolecular condensates; however, aberrant liquid-to-solid transitions "
-        "within these condensates promote irreversible cross-β amyloid aggregation implicated in "
-        "Alzheimer's disease. Here, we establish a statistical-mechanical framework combining "
-        "Flory-Huggins-Voorn-Overbeek (FH-VO) polymer theory with Cahn-Hilliard interfacial gradient "
+    p_abs.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+    r_absh = p_abs.add_run("Abstract—")
+    r_absh.font.bold = True; r_absh.font.size = Pt(9.5)
+    r_abst = p_abs.add_run(
+        "Biomolecular condensates formed via liquid-liquid phase separation (LLPS) of the intrinsically disordered "
+        "protein Tau are implicated in both physiological compartmentalization and the nucleation of pathological "
+        "amyloid aggregates. Here, we establish a physics-based, coarse-grained statistical-thermodynamic and kinetic framework "
+        "combining Flory-Huggins-Voorn-Overbeek (FH-VO) polymer theory with Cahn-Hilliard interfacial gradient "
         "theory and mass-conserving master equations to investigate how two-dimensional (2D) nanomaterial "
         "interfaces (aqueous-passivated borophene nanoflakes and Ti3C2Tx MXene) modulate Tau LLPS and condensate aging. "
-        "The model is parameterized to reproduce the reported Lower Critical Solution Temperature (LCST) and turbidity "
-        "onset behavior of the Tau K18 repeat domain (Ambadipudi et al., Nat. Commun. 2017), where the order "
+        "The bulk phase separation model is parameterized against published Lower Critical Solution Temperature (LCST) and turbidity "
+        "onset measurements of the Tau K18 repeat domain (Ambadipudi et al., Nat. Commun. 2017), where the order "
         "parameter φ_tilde represents the effective semi-dilute lattice site occupancy (scaled via s_phi = 0.950 mM⁻¹, "
         "yielding 100 µM ↔ φ_tilde_total = 0.095, with hydrodynamic radius Rh = 3.4 ± 0.6 nm, Stelzl et al., JACS Au 2022). "
         "A foundational feature of this formulation is that 2D interface-mediated LLPS suppression emerges "
         "self-consistently from explicit Langmuir adsorption mass balance governed by standard thermodynamic "
         "activity a = c / c° (where c° = 1.0 M; φ_tilde_total = φ_tilde_free + m_tilde_max θ_ads, with surface capacity "
         "c_max,ads = a_s Γ_max 10³⁰ / N_A [µM]), without empirical alterations to the intrinsic Flory interaction "
-        "parameter (∂χ/∂a_s = 0). Using literature-audited scenario parameters, the model demonstrates a strong material-specific "
+        "parameter (∂χ/∂a_s = 0). Using literature-audited scenario parameters, the model predicts a strong material-specific "
         "differentiation: stabilized borophene (ΔG_ads = -7.8 kcal/mol, contact angle θ_c = 50.3° with surface excess Δγ_s = 1.023 µN/m) "
         "shifts the apparent cloud point from 15.3 °C to 29.4 °C at C_nano = 100 µg/mL (interfacial area density "
         "a_s = 1.0×10⁻⁴ nm⁻¹ for SSA = 1000 m²/g), dissolving LLPS across room and sub-physiological temperatures and depleting ~60% "
@@ -211,10 +230,12 @@ def build_official_manuscript():
         "induces only partial depletion (c_free ≈ 87.6 µM at 100 µg/mL), maintaining stable condensate droplets across the loading window. "
         "Coupled master equations with strictly dimensional fluxes confirm that interfacial monomer sequestration retards "
         "secondary nucleation without altering the underlying intrinsic aggregation pathway. An 8-parameter Sobol global "
-        "sensitivity analysis using direct physical root solvers identifies interfacial area density a_s and thermal LCST slope "
-        "β as primary control variables. This work provides quantitative physical principles for modulating biomolecular "
+        f"sensitivity analysis using direct physical root solvers identifies thermal LCST slope β (S_Ti = {st_beta:.2f}), "
+        f"ionic strength I (S_Ti = {st_I:.2f}), and interfacial area density a_s (S_Ti = {st_as_m:.2f}) as primary control variables. "
+        "This work provides quantitative physical principles for prospective modulation of biomolecular "
         "condensates with structured 2D biointerfaces."
-    ).font.size = Pt(9.5)
+    )
+    r_abst.font.size = Pt(9.5)
     p_abs.paragraph_format.space_after = Pt(14)
 
     # 1. Introduction
@@ -256,15 +277,15 @@ def build_official_manuscript():
         "Condensate aging kinetics under strictly dimensional master equations. (a) Fibril mass fraction M_drop(t). (b) Liquid monomer depletion φ_dense(t). (c) Interfacial monomer sequestration m_ads(t). (d) Fibrillation lag time τ_lag vs 2D loading C_nano across the physical range [0, 100] µg/mL.")
 
     h2("2.5 Global Sensitivity and Convergence Analysis")
-    body("Figure 5 presents the Saltelli-Jansen Sobol global sensitivity analysis over the 8 parameter distributions detailed in Table 3. For the apparent cloud point T_cloud^app (Fig. 5a), evaluated by directly executing the FH-VO Brent root solver for every sample, critical temperature Tc (S_Ti = 0.59) and thermal slope β (S_Ti = 0.44) dominate. For fibrillation mass M_final (Fig. 5b), interfacial area density a_s (S_Ti = 0.84) and extraction rate k_ext (S_Ti = 0.18) exert primary control. Figures 5c,d confirm that all total-effect indices S_Ti(N) achieve numerical stability across sub-block sample sizes.")
+    body(f"Figure 5 presents the Saltelli-Jansen Sobol global sensitivity analysis over the 8 parameter distributions detailed in Table 3, evaluated directly from data/sobol_indices_N512.csv (N_base = 512, N_eval = 5120, scrambled Sobol seed = 42, Jansen estimator). For the apparent cloud point T_cloud^app (Fig. 5a), evaluated by directly executing the FH-VO Brent root solver for every sample, thermal LCST slope β (S_Ti = {st_beta:.2f}), ionic strength I (S_Ti = {st_I:.2f}), effective chain length N_eff (S_Ti = {st_N:.2f}), and critical temperature Tc (S_Ti = {st_Tc:.2f}) dominate, with secondary contributions from adsorption free energy ΔG_ads (S_Ti = {st_dG:.2f}) and interfacial area density a_s (S_Ti = {st_as_tc:.2f}). For fibrillation mass M_final (Fig. 5b), interfacial area density a_s (first-order S_i = {s1_as_m:.2f}, total-effect S_Ti = {st_as_m:.2f}) and extraction rate k_ext (S_Ti = {st_kext_m:.2f}) exert primary control. Note that the phenomenological gradient correlation length b is treated as an effective fixed geometric scale anchored to experimental Rh and is not part of the 8-parameter Sobol variance decomposition. Figures 5c,d confirm that all total-effect indices S_Ti(N) achieve numerical stability across sub-block sample sizes N ∈ {{64, 128, 256, 512}}.")
 
     fig("figures/Figure_4_Sobol_Sensitivity_LLPS.png",
         "Figure 5.",
-        "Sobol global sensitivity and block convergence analysis. First-order (S_i) and total-effect (S_Ti) indices for (a) apparent cloud point T_cloud^app (evaluated directly with FH-VO Brent root solver) and (b) fibrillation arrest M_final (evaluated directly via kinetic ODEs). (c,d) Convergence curves S_Ti(N) confirming numerical stability across sample size.")
+        "Sobol global sensitivity and block convergence analysis dynamically read from data/sobol_indices_N512.csv. First-order (S_i) and total-effect (S_Ti) indices for (a) apparent cloud point T_cloud^app (evaluated directly with FH-VO Brent root solver) and (b) fibrillation arrest M_final (evaluated directly via kinetic ODEs). (c,d) Convergence curves S_Ti(N) confirming numerical stability across sample size N ∈ {64, 128, 256, 512}.")
 
     h2("2.6 Comparison with Recent Literature and Model Limitations")
     body("Our model predictions agree with recent biophysical findings on condensate interfaces. Specifically, Sporbeck et al. (PRX Life 2026) demonstrated that electrostatic charge and membrane modifications dictate Tau condensate wetting and spreading transitions [27]. Furthermore, Favetta et al. (Langmuir 2025) and Visser et al. (Nat. Commun. 2025) showed that interfacial adsorption and surfactant-like surface behavior can arrest heterogeneous nucleation at condensate boundaries [25,26].")
-    body("Model limitations include: (i) an effective coarse-grained order parameter description where φ_tilde represents lattice occupancy rather than atomistic coordinates, (ii) implicit solvent treatment without explicit conformational dynamics, (iii) an idealized non-cooperative Langmuir adsorption isotherm, (iv) representation of borophene as an idealized passivated aqueous nanoflake without explicit chemical degradation kinetics, and (v) omission of local MXene surface-termination micro-heterogeneity. Future work combining all-atom MD with continuum phase-field modeling will provide atomistic resolution of the 2D interface-induced conformational landscape.")
+    body("Model limitations and domain of validity are explicitly stated: (i) This work is deliberately formulated as a predictive theoretical study. Bulk phase separation is parameterized against published Tau K18 turbidity measurements [5], whereas nanomaterial-dependent adsorption, wetting, and kinetic outputs are presented as prospective, falsifiable model-scenario predictions rather than direct experimental validation. (ii) Tau K18 is an experimentally well-characterized four-repeat domain construct containing the primary amyloidogenic motifs (R1-R4); extrapolation to full-length Tau (Tau-441), which incorporates large charged projection domains and distinct regulatory phosphorylation landscapes, will require independent parameterization. (iii) An effective coarse-grained order parameter description where φ_tilde represents lattice occupancy rather than atomistic coordinates. (iv) Implicit solvent treatment without explicit conformational dynamics. (v) An idealized non-cooperative Langmuir adsorption isotherm. (vi) Representation of borophene as an idealized passivated aqueous nanoflake without explicit chemical degradation kinetics. (vii) Omission of local MXene surface-termination micro-heterogeneity. Future work combining all-atom MD with continuum phase-field modeling will provide atomistic resolution of the 2D interface-induced conformational landscape.")
 
     # 3. Methods
     h1("3. Methods")
@@ -430,7 +451,7 @@ def build_official_manuscript():
 
     # 4. Declarations
     h1("4. Data and Code Availability")
-    body("All numerical simulation codes, statistical thermodynamic solvers, master equation integrators, unit test suites, and figure generation routines are openly available at the project repository (https://github.com/sircalch/llps-tau-2d-nanomaterials). Complete simulation datasets and code will be permanently archived on Zenodo upon manuscript acceptance.")
+    body("All numerical simulation codes, statistical thermodynamic solvers, master equation integrators, unit test suites, digitized literature data, and figure generation routines are openly available in the project GitHub repository (https://github.com/sircalch/llps-tau-2d-nanomaterials) supported by multiplatform continuous integration. A permanent public Zenodo archive with an immutable DOI will be minted upon tagged release following peer review.")
 
     h1("5. Author Contributions")
     body("A.M.H. conceived the project, developed the theoretical FH-VO model, performed numerical simulations, Sobol sensitivity analysis, and manuscript drafting. J.M.M.B. contributed to thermodynamic formulations, wetting derivations, and manuscript editing. S.L.F.A. contributed to biophysical validation, literature benchmarking, and manuscript review. C.I.M.O. performed statistical mechanics verification, dimensional consistency auditing, and manuscript editing. All authors approved the final manuscript.")

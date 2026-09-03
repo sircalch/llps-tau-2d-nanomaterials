@@ -168,6 +168,30 @@ def test_kinetic_mass_conservation():
         assert res["m_ads"][-1] >= 0.0
 
 
+def test_sobol_indices_dataset_integrity():
+    """Verify that Sobol global sensitivity analysis CSV datasets exist and satisfy mathematical bounds."""
+    sobol_path = os.path.join(os.path.dirname(__file__), "../data/sobol_indices_N512.csv")
+    assert os.path.exists(sobol_path), f"Sobol indices CSV not found at {sobol_path}"
+    df_sobol = pd.read_csv(sobol_path)
+    assert len(df_sobol) == 8, "Expected 8 parameters in Sobol index table"
+    expected_cols = {"parameter", "S1_Tcloud", "ST_Tcloud", "S1_M_final", "ST_M_final"}
+    assert expected_cols.issubset(df_sobol.columns)
+
+    # Check bounds [0, 1]
+    for col in ["S1_Tcloud", "ST_Tcloud", "S1_M_final", "ST_M_final"]:
+        assert (df_sobol[col] >= 0.0).all() and (df_sobol[col] <= 1.0).all()
+
+    # Total variance explained in first-order indices must be positive and <= 1.0
+    assert 0.40 <= df_sobol["S1_Tcloud"].sum() <= 1.0
+    assert 0.40 <= df_sobol["S1_M_final"].sum() <= 1.0
+
+    # Verify convergence table
+    conv_path = os.path.join(os.path.dirname(__file__), "../data/sobol_convergence_N512.csv")
+    assert os.path.exists(conv_path), f"Sobol convergence CSV not found at {conv_path}"
+    df_conv = pd.read_csv(conv_path)
+    assert set(df_conv["N_base"].unique()) == {64, 128, 256, 512}
+
+
 if __name__ == "__main__":
     test_dimensional_capacity_conversion()
     test_standard_thermodynamic_activity_and_coverage()
@@ -177,5 +201,7 @@ if __name__ == "__main__":
     test_thermodynamic_parameter_sensitivities()
     test_digitized_experimental_data_integrity()
     test_kinetic_mass_conservation()
+    test_sobol_indices_dataset_integrity()
     print("All comprehensive unit tests passed successfully!")
+
 

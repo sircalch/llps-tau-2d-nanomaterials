@@ -418,62 +418,70 @@ def generate_figure_5():
         [0.10e-3, 0.35e-3], [0.20, 2.50]
     ]
 
-    sampler = qmc.Sobol(d=2*D, scramble=True, seed=42)
-    raw = sampler.random(N_base)
+    csv_indices = "data/sobol_indices_N512.csv"
+    csv_conv = "data/sobol_convergence_N512.csv"
 
-    A_mat = np.zeros((N_base, D))
-    B_mat = np.zeros((N_base, D))
-    for j in range(D):
-        A_mat[:, j] = BOUNDS[j][0] + raw[:, j] * (BOUNDS[j][1] - BOUNDS[j][0])
-        B_mat[:, j] = BOUNDS[j][0] + raw[:, D+j] * (BOUNDS[j][1] - BOUNDS[j][0])
+    if os.path.exists(csv_indices):
+        print(f"Loading Sobol indices directly from {csv_indices}...")
+        df_ind = pd.read_csv(csv_indices).set_index("parameter")
+        param_order = ["N_eff", "beta", "Tc_K", "dG_ads", "a_s", "I_M", "eta_eff", "k_ext"]
+        S1_Tc = df_ind.loc[param_order, "S1_Tcloud"].values
+        ST_Tc = df_ind.loc[param_order, "ST_Tcloud"].values
+        S1_M  = df_ind.loc[param_order, "S1_M_final"].values
+        ST_M  = df_ind.loc[param_order, "ST_M_final"].values
+    else:
+        sampler = qmc.Sobol(d=2*D, scramble=True, seed=42)
+        raw = sampler.random(N_base)
 
-    eval_matrices = [A_mat, B_mat]
-    for j in range(D):
-        AB_j = A_mat.copy()
-        AB_j[:, j] = B_mat[:, j]
-        eval_matrices.append(AB_j)
-
-    all_p = np.vstack(eval_matrices)
-    total = all_p.shape[0]
-
-    Y_Tc = np.zeros(total)
-    Y_M  = np.zeros(total)
-
-    for i in range(total):
-        N_v, beta_v, Tc_v, dG_v, as_v, I_v, eta_v, k_ext_v = all_p[i]
-        
-        # True physical evaluation of T_cloud^app via FH-VO Brent solver:
-        fh_local = FloryHugginsVoornOverbeek(N=N_v, Tc_K=Tc_v, beta=beta_v)
-        tc_app = fh_local.calculate_apparent_cloud_point(
-            a_s_nm_inv=as_v, dG_ads=dG_v, I_M=I_v, Gamma_max=0.38
-        )
-        Y_Tc[i] = tc_app if tc_app is not None else 65.0
-
-        # Physical kinetic evaluation:
-        kin = CondensateAgingKinetics(k_extract=k_ext_v)
-        res = kin.simulate(t_span=(0, 24), phi_0=0.60, a_s_nm_inv=as_v)
-        Y_M[i] = res["M_final"]
-
-    def calc_indices_from_matrices(fA, fB, fAB_list):
-        N_s = len(fA)
-        v_tot = np.var(np.concatenate([fA, fB])) + 1e-12
-        S1 = np.zeros(D); ST = np.zeros(D)
+        A_mat = np.zeros((N_base, D))
+        B_mat = np.zeros((N_base, D))
         for j in range(D):
-            fAB = fAB_list[j]
-            # Jansen (1999) estimator: ST_j = E[(fA - fAB_j)^2] / (2*Var)
-            ST[j] = np.mean((fA - fAB)**2) / (2.0 * v_tot)
-            S1[j] = max(0.0, (np.mean(fB * fAB) - np.mean(fA)*np.mean(fB)) / v_tot)
-        return np.clip(S1, 0, 1), np.clip(ST, 0, 1)
+            A_mat[:, j] = BOUNDS[j][0] + raw[:, j] * (BOUNDS[j][1] - BOUNDS[j][0])
+            B_mat[:, j] = BOUNDS[j][0] + raw[:, D+j] * (BOUNDS[j][1] - BOUNDS[j][0])
 
-    fA_Tc = Y_Tc[:N_base]
-    fB_Tc = Y_Tc[N_base:2*N_base]
-    fAB_Tc_list = [Y_Tc[(2+j)*N_base:(3+j)*N_base] for j in range(D)]
-    S1_Tc, ST_Tc = calc_indices_from_matrices(fA_Tc, fB_Tc, fAB_Tc_list)
+        eval_matrices = [A_mat, B_mat]
+        for j in range(D):
+            AB_j = A_mat.copy()
+            AB_j[:, j] = B_mat[:, j]
+            eval_matrices.append(AB_j)
 
-    fA_M = Y_M[:N_base]
-    fB_M = Y_M[N_base:2*N_base]
-    fAB_M_list = [Y_M[(2+j)*N_base:(3+j)*N_base] for j in range(D)]
-    S1_M, ST_M   = calc_indices_from_matrices(fA_M, fB_M, fAB_M_list)
+        all_p = np.vstack(eval_matrices)
+        total = all_p.shape[0]
+
+        Y_Tc = np.zeros(total)
+        Y_M  = np.zeros(total)
+
+        for i in range(total):
+            N_v, beta_v, Tc_v, dG_v, as_v, I_v, eta_v, k_ext_v = all_p[i]
+            
+            fh_local = FloryHugginsVoornOverbeek(N=N_v, Tc_K=Tc_v, beta=beta_v)
+            tc_app = fh_local.calculate_apparent_cloud_point(
+                a_s_nm_inv=as_v, dG_ads=dG_v, I_M=I_v, Gamma_max=0.38
+            )
+            Y_Tc[i] = tc_app if tc_app is not None else 65.0
+
+            kin = CondensateAgingKinetics(k_extract=k_ext_v)
+            res = kin.simulate(t_span=(0, 24), phi_0=0.60, a_s_nm_inv=as_v)
+            Y_M[i] = res["M_final"]
+
+        def calc_indices_from_matrices(fA, fB, fAB_list):
+            v_tot = np.var(np.concatenate([fA, fB])) + 1e-12
+            S1 = np.zeros(D); ST = np.zeros(D)
+            for j in range(D):
+                fAB = fAB_list[j]
+                ST[j] = np.mean((fA - fAB)**2) / (2.0 * v_tot)
+                S1[j] = max(0.0, (np.mean(fB * fAB) - np.mean(fA)*np.mean(fB)) / v_tot)
+            return np.clip(S1, 0, 1), np.clip(ST, 0, 1)
+
+        fA_Tc = Y_Tc[:N_base]
+        fB_Tc = Y_Tc[N_base:2*N_base]
+        fAB_Tc_list = [Y_Tc[(2+j)*N_base:(3+j)*N_base] for j in range(D)]
+        S1_Tc, ST_Tc = calc_indices_from_matrices(fA_Tc, fB_Tc, fAB_Tc_list)
+
+        fA_M = Y_M[:N_base]
+        fB_M = Y_M[N_base:2*N_base]
+        fAB_M_list = [Y_M[(2+j)*N_base:(3+j)*N_base] for j in range(D)]
+        S1_M, ST_M   = calc_indices_from_matrices(fA_M, fB_M, fAB_M_list)
 
     fig, axes = plt.subplots(2, 2, figsize=(13.5, 9.5), dpi=300)
     x = np.arange(D); w = 0.32
@@ -498,22 +506,32 @@ def generate_figure_5():
     colors_p = plt.cm.tab10(np.linspace(0, 0.9, D))
 
     ax_c1 = axes[1, 0]; ax_c2 = axes[1, 1]
-    for j in range(D):
-        st_tc_curve = []
-        st_m_curve = []
-        for Nv in N_steps:
-            fA_sub = fA_Tc[:Nv]
-            fB_sub = fB_Tc[:Nv]
-            fAB_sub_list = [fAB[:Nv] for fAB in fAB_Tc_list]
-            st_tc_curve.append(calc_indices_from_matrices(fA_sub, fB_sub, fAB_sub_list)[1][j])
 
-            fA_m_sub = fA_M[:Nv]
-            fB_m_sub = fB_M[:Nv]
-            fAB_m_sub_list = [fAB[:Nv] for fAB in fAB_M_list]
-            st_m_curve.append(calc_indices_from_matrices(fA_m_sub, fB_m_sub, fAB_m_sub_list)[1][j])
+    if os.path.exists(csv_conv):
+        print(f"Loading Sobol convergence curves directly from {csv_conv}...")
+        df_conv = pd.read_csv(csv_conv)
+        param_order = ["N_eff", "beta", "Tc_K", "dG_ads", "a_s", "I_M", "eta_eff", "k_ext"]
+        for j, p_code in enumerate(param_order):
+            df_p = df_conv[df_conv['parameter'] == p_code].sort_values('N_base')
+            ax_c1.plot(df_p['N_base'], df_p['ST_Tcloud'], marker='o', ms=4, color=colors_p[j], lw=1.8, label=PARAM_NAMES[j])
+            ax_c2.plot(df_p['N_base'], df_p['ST_M_final'], marker='o', ms=4, color=colors_p[j], lw=1.8, label=PARAM_NAMES[j])
+    else:
+        for j in range(D):
+            st_tc_curve = []
+            st_m_curve = []
+            for Nv in N_steps:
+                fA_sub = fA_Tc[:Nv]
+                fB_sub = fB_Tc[:Nv]
+                fAB_sub_list = [fAB[:Nv] for fAB in fAB_Tc_list]
+                st_tc_curve.append(calc_indices_from_matrices(fA_sub, fB_sub, fAB_sub_list)[1][j])
 
-        ax_c1.plot(N_steps, st_tc_curve, marker='o', ms=4, color=colors_p[j], lw=1.8, label=PARAM_NAMES[j])
-        ax_c2.plot(N_steps, st_m_curve, marker='o', ms=4, color=colors_p[j], lw=1.8, label=PARAM_NAMES[j])
+                fA_m_sub = fA_M[:Nv]
+                fB_m_sub = fB_M[:Nv]
+                fAB_m_sub_list = [fAB[:Nv] for fAB in fAB_M_list]
+                st_m_curve.append(calc_indices_from_matrices(fA_m_sub, fB_m_sub, fAB_m_sub_list)[1][j])
+
+            ax_c1.plot(N_steps, st_tc_curve, marker='o', ms=4, color=colors_p[j], lw=1.8, label=PARAM_NAMES[j])
+            ax_c2.plot(N_steps, st_m_curve, marker='o', ms=4, color=colors_p[j], lw=1.8, label=PARAM_NAMES[j])
 
     ax_c1.set_xlabel(r"Base Sample Size, $N_{base}$", fontsize=10.0, fontweight='bold')
     ax_c1.set_ylabel(r"Total-Effect $S_{Ti}(N)$", fontsize=10.0, fontweight='bold')
