@@ -470,31 +470,16 @@ def generate_figure_5():
             ax_c1.errorbar(df_p['N_base'], df_p['ST_Tcloud'], yerr=df_p['ST_conf_Tcloud'], marker='o', ms=4, capsize=2.5, color=colors_p[j], lw=1.8, label=PARAM_NAMES[j])
             ax_c2.errorbar(df_p['N_base'], df_p['ST_M_final'], yerr=df_p['ST_conf_M_final'], marker='o', ms=4, capsize=2.5, color=colors_p[j], lw=1.8, label=PARAM_NAMES[j])
     else:
-        for j in range(D):
-            st_tc_curve = []
-            st_m_curve = []
-            for Nv in N_steps:
-                fA_sub = fA_Tc[:Nv]
-                fB_sub = fB_Tc[:Nv]
-                fAB_sub_list = [fAB[:Nv] for fAB in fAB_Tc_list]
-                st_tc_curve.append(calc_indices_from_matrices(fA_sub, fB_sub, fAB_sub_list)[1][j])
-
-                fA_m_sub = fA_M[:Nv]
-                fB_m_sub = fB_M[:Nv]
-                fAB_m_sub_list = [fAB[:Nv] for fAB in fAB_M_list]
-                st_m_curve.append(calc_indices_from_matrices(fA_m_sub, fB_m_sub, fAB_m_sub_list)[1][j])
-
-            ax_c1.plot(N_steps, st_tc_curve, marker='o', ms=4, color=colors_p[j], lw=1.8, label=PARAM_NAMES[j])
-            ax_c2.plot(N_steps, st_m_curve, marker='o', ms=4, color=colors_p[j], lw=1.8, label=PARAM_NAMES[j])
+        raise FileNotFoundError(f"Convergence CSV not found at {csv_conv}. Run scratch/run_salib_sobol.py first.")
 
     ax_c1.set_xlabel(r"Base Sample Size, $N_{base}$", fontsize=10.0, fontweight='bold')
     ax_c1.set_ylabel(r"Total-Effect $S_{Ti}(N)$", fontsize=10.0, fontweight='bold')
-    ax_c1.set_title(r"(c) Sobol Block Convergence: $T_{cloud}^{app}$ Indices", fontsize=10.5, fontweight='bold')
+    ax_c1.set_title(r"(c) Block Sensitivity Trajectories: $T_{cloud}^{app}$ Indices", fontsize=10.5, fontweight='bold')
     ax_c1.grid(True, ls=':', alpha=0.45); ax_c1.legend(fontsize=7.2, loc='upper right', ncol=2)
 
     ax_c2.set_xlabel(r"Base Sample Size, $N_{base}$", fontsize=10.0, fontweight='bold')
     ax_c2.set_ylabel(r"Total-Effect $S_{Ti}(N)$", fontsize=10.0, fontweight='bold')
-    ax_c2.set_title(r"(d) Sobol Block Convergence: $M_{final}$ Indices", fontsize=10.5, fontweight='bold')
+    ax_c2.set_title(r"(d) Block Sensitivity Trajectories: $M_{final}$ Indices", fontsize=10.5, fontweight='bold')
     ax_c2.grid(True, ls=':', alpha=0.45); ax_c2.legend(fontsize=7.2, loc='upper right', ncol=2)
 
     plt.tight_layout()
