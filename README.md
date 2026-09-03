@@ -1,5 +1,6 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.22268507.svg)](https://doi.org/10.5281/zenodo.22268507)
 
 This repository contains the statistical-thermodynamic, Cahn-Hilliard interfacial gradient, and chemical master equation code supporting the manuscript:
 

@@ -12,4 +12,7 @@ authors:
 title: "Thermodynamic modulation of Tau liquid-liquid phase separation and condensate wetting by two-dimensional nanomaterial interfaces"
 version: 1.0.1
 date-released: 2026-09-02
+doi: 10.5281/zenodo.22268507
 url: "https://github.com/sircalch/llps-tau-2d-nanomaterials"
+license: MIT
+repository-code: "https://github.com/sircalch/llps-tau-2d-nanomaterials"

@@ -477,7 +477,7 @@ def build_official_manuscript():
     body("There are no conflicts to declare.")
 
     h1("Data and Code Availability")
-    body("All simulation scripts, thermodynamic root solvers, kinetic master equation integrators, digitized experimental literature data, and unit test suites are openly available in the project GitHub repository (https://github.com/sircalch/llps-tau-2d-nanomaterials) supported by automated continuous integration. A permanent, immutable Zenodo archive with a dedicated DOI will be minted from the tagged release candidate (v1.0.0) upon submission.")
+    body("All simulation scripts, thermodynamic root solvers, kinetic master equation integrators, digitized experimental literature data, and unit test suites are openly available in the project GitHub repository (https://github.com/sircalch/llps-tau-2d-nanomaterials) under the MIT License and supported by automated continuous integration. The exact version reported here is permanently archived on Zenodo: https://doi.org/10.5281/zenodo.22268507 (release v1.0.1). Running python run_pipeline.py regenerates the full unit-test suite, every figure, this manuscript, and the cover letter from source.")
 
     h1("Acknowledgements")
     body("The authors acknowledge financial and infrastructural support from Universidad Estatal de Sonora (UES) and Universidad de Sonora (UNISON). Generative AI Disclosure: During the preparation of this computational study, generative AI assistance (OpenAI Codex / Anthropic Claude / Google Gemini) was utilized for code review, unit test generation, and manuscript formatting. All mathematical models, numerical simulations, physical interpretations, and bibliographic citations were independently verified and finalized under full author responsibility.")
