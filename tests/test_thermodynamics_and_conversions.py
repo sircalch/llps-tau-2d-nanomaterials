@@ -269,15 +269,7 @@ def test_sobol_prefix_consistency_and_shapes():
 
 
 if __name__ == "__main__":
-    test_dimensional_capacity_conversion()
-    test_standard_thermodynamic_activity_and_coverage()
-    test_apparent_cloud_point_brent_root_solver()
-    test_material_dissolution_and_depletion_thresholds()
-    test_exact_young_wetting_identity_and_closure()
-    test_thermodynamic_parameter_sensitivities()
-    test_digitized_experimental_data_integrity()
-    test_kinetic_mass_conservation()
-    test_sobol_indices_dataset_integrity()
-    print("All comprehensive unit tests passed successfully!")
+    import pytest
+    sys.exit(pytest.main(["-v", __file__]))
 
 
