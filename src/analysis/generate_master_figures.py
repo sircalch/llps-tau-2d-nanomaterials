@@ -425,82 +425,36 @@ def generate_figure_5():
         print(f"Loading Sobol indices directly from {csv_indices}...")
         df_ind = pd.read_csv(csv_indices).set_index("parameter")
         param_order = ["N_eff", "beta", "Tc_K", "dG_ads", "a_s", "I_M", "eta_eff", "k_ext"]
-        S1_Tc = df_ind.loc[param_order, "S1_Tcloud"].values
-        ST_Tc = df_ind.loc[param_order, "ST_Tcloud"].values
-        S1_M  = df_ind.loc[param_order, "S1_M_final"].values
-        ST_M  = df_ind.loc[param_order, "ST_M_final"].values
+        S1_Tc      = df_ind.loc[param_order, "S1_Tcloud"].values
+        S1_conf_Tc = df_ind.loc[param_order, "S1_conf_Tcloud"].values
+        ST_Tc      = df_ind.loc[param_order, "ST_Tcloud"].values
+        ST_conf_Tc = df_ind.loc[param_order, "ST_conf_Tcloud"].values
+
+        S1_M       = df_ind.loc[param_order, "S1_M_final"].values
+        S1_conf_M  = df_ind.loc[param_order, "S1_conf_M_final"].values
+        ST_M       = df_ind.loc[param_order, "ST_M_final"].values
+        ST_conf_M  = df_ind.loc[param_order, "ST_conf_M_final"].values
     else:
-        sampler = qmc.Sobol(d=2*D, scramble=True, seed=42)
-        raw = sampler.random(N_base)
-
-        A_mat = np.zeros((N_base, D))
-        B_mat = np.zeros((N_base, D))
-        for j in range(D):
-            A_mat[:, j] = BOUNDS[j][0] + raw[:, j] * (BOUNDS[j][1] - BOUNDS[j][0])
-            B_mat[:, j] = BOUNDS[j][0] + raw[:, D+j] * (BOUNDS[j][1] - BOUNDS[j][0])
-
-        eval_matrices = [A_mat, B_mat]
-        for j in range(D):
-            AB_j = A_mat.copy()
-            AB_j[:, j] = B_mat[:, j]
-            eval_matrices.append(AB_j)
-
-        all_p = np.vstack(eval_matrices)
-        total = all_p.shape[0]
-
-        Y_Tc = np.zeros(total)
-        Y_M  = np.zeros(total)
-
-        for i in range(total):
-            N_v, beta_v, Tc_v, dG_v, as_v, I_v, eta_v, k_ext_v = all_p[i]
-            
-            fh_local = FloryHugginsVoornOverbeek(N=N_v, Tc_K=Tc_v, beta=beta_v)
-            tc_app = fh_local.calculate_apparent_cloud_point(
-                a_s_nm_inv=as_v, dG_ads=dG_v, I_M=I_v, Gamma_max=0.38
-            )
-            Y_Tc[i] = tc_app if tc_app is not None else 65.0
-
-            kin = CondensateAgingKinetics(k_extract=k_ext_v)
-            res = kin.simulate(t_span=(0, 24), phi_0=0.60, a_s_nm_inv=as_v)
-            Y_M[i] = res["M_final"]
-
-        def calc_indices_from_matrices(fA, fB, fAB_list):
-            v_tot = np.var(np.concatenate([fA, fB])) + 1e-12
-            S1 = np.zeros(D); ST = np.zeros(D)
-            for j in range(D):
-                fAB = fAB_list[j]
-                ST[j] = np.mean((fA - fAB)**2) / (2.0 * v_tot)
-                S1[j] = max(0.0, (np.mean(fB * fAB) - np.mean(fA)*np.mean(fB)) / v_tot)
-            return np.clip(S1, 0, 1), np.clip(ST, 0, 1)
-
-        fA_Tc = Y_Tc[:N_base]
-        fB_Tc = Y_Tc[N_base:2*N_base]
-        fAB_Tc_list = [Y_Tc[(2+j)*N_base:(3+j)*N_base] for j in range(D)]
-        S1_Tc, ST_Tc = calc_indices_from_matrices(fA_Tc, fB_Tc, fAB_Tc_list)
-
-        fA_M = Y_M[:N_base]
-        fB_M = Y_M[N_base:2*N_base]
-        fAB_M_list = [Y_M[(2+j)*N_base:(3+j)*N_base] for j in range(D)]
-        S1_M, ST_M   = calc_indices_from_matrices(fA_M, fB_M, fAB_M_list)
+        raise FileNotFoundError(f"Sobol indices CSV not found at {csv_indices}. Run scratch/run_salib_sobol.py first.")
 
     fig, axes = plt.subplots(2, 2, figsize=(13.5, 9.5), dpi=300)
     x = np.arange(D); w = 0.32
 
     ax = axes[0, 0]
-    ax.bar(x - w/2, S1_Tc, w, label=r"First-Order $S_i$", color='#3B82F6', ec='#1D4ED8')
-    ax.bar(x + w/2, ST_Tc, w, label=r"Total-Effect $S_{Ti}$", color='#93C5FD', ec='#2563EB')
+    ax.bar(x - w/2, S1_Tc, w, yerr=S1_conf_Tc, capsize=3, error_kw={'elinewidth': 1.0, 'ecolor': '#1E3A8A'}, label=r"First-Order $S_i$", color='#3B82F6', ec='#1D4ED8')
+    ax.bar(x + w/2, ST_Tc, w, yerr=ST_conf_Tc, capsize=3, error_kw={'elinewidth': 1.0, 'ecolor': '#1E3A8A'}, label=r"Total-Effect $S_{Ti}$", color='#93C5FD', ec='#2563EB')
     ax.set_xticks(x); ax.set_xticklabels(PARAM_DESCRIP, rotation=35, ha='right', fontsize=8.5)
     ax.set_ylabel("Sobol Index", fontsize=10.0, fontweight='bold')
-    ax.set_title(r"(a) Sobol Indices: Apparent Cloud Point $T_{cloud}^{app}$" + "\n" + r"($N_{base}=512$, $D=8$, $N_{eval}=5120$, scrambled Sobol seed=42, Jansen estimator)", fontsize=10.5, fontweight='bold')
-    ax.set_ylim(0, 1.0); ax.grid(True, ls=':', alpha=0.45, axis='y'); ax.legend(fontsize=8.2)
+    ax.set_title(r"(a) Sobol Indices: Apparent Cloud Point $T_{cloud}^{app}$" + "\n" + r"($N_{base}=512$, $D=8$, $N_{eval}=5120$, Saltelli et al. / SALib, 95% CI)", fontsize=10.5, fontweight='bold')
+    ax.set_ylim(-0.10, 1.0); ax.grid(True, ls=':', alpha=0.45, axis='y'); ax.legend(fontsize=8.2)
 
     ax = axes[0, 1]
-    ax.bar(x - w/2, S1_M, w, label=r"First-Order $S_i$", color='#10B981', ec='#047857')
-    ax.bar(x + w/2, ST_M, w, label=r"Total-Effect $S_{Ti}$", color='#A7F3D0', ec='#059669')
+    ax.bar(x - w/2, S1_M, w, yerr=S1_conf_M, capsize=3, error_kw={'elinewidth': 1.0, 'ecolor': '#064E3B'}, label=r"First-Order $S_i$", color='#10B981', ec='#047857')
+    ax.bar(x + w/2, ST_M, w, yerr=ST_conf_M, capsize=3, error_kw={'elinewidth': 1.0, 'ecolor': '#064E3B'}, label=r"Total-Effect $S_{Ti}$", color='#A7F3D0', ec='#059669')
     ax.set_xticks(x); ax.set_xticklabels(PARAM_DESCRIP, rotation=35, ha='right', fontsize=8.5)
     ax.set_ylabel("Sobol Index", fontsize=10.0, fontweight='bold')
-    ax.set_title(r"(b) Sobol Indices: Fibrillation Mass $M_{final}$" + "\n" + r"($N_{base}=512$, no second-order indices; Jansen estimator)", fontsize=10.5, fontweight='bold')
-    ax.set_ylim(0, 1.0); ax.grid(True, ls=':', alpha=0.45, axis='y'); ax.legend(fontsize=8.2)
+    ax.set_title(r"(b) Sobol Indices: Fibrillation Mass $M_{final}$" + "\n" + r"($N_{base}=512$, Saltelli et al. / SALib, 95% CI)", fontsize=10.5, fontweight='bold')
+    ax.set_ylim(0, 1.10); ax.grid(True, ls=':', alpha=0.45, axis='y'); ax.legend(fontsize=8.2)
 
     N_steps = [64, 128, 256, 512]  # Convergence sub-blocks
     colors_p = plt.cm.tab10(np.linspace(0, 0.9, D))
@@ -513,8 +467,8 @@ def generate_figure_5():
         param_order = ["N_eff", "beta", "Tc_K", "dG_ads", "a_s", "I_M", "eta_eff", "k_ext"]
         for j, p_code in enumerate(param_order):
             df_p = df_conv[df_conv['parameter'] == p_code].sort_values('N_base')
-            ax_c1.plot(df_p['N_base'], df_p['ST_Tcloud'], marker='o', ms=4, color=colors_p[j], lw=1.8, label=PARAM_NAMES[j])
-            ax_c2.plot(df_p['N_base'], df_p['ST_M_final'], marker='o', ms=4, color=colors_p[j], lw=1.8, label=PARAM_NAMES[j])
+            ax_c1.errorbar(df_p['N_base'], df_p['ST_Tcloud'], yerr=df_p['ST_conf_Tcloud'], marker='o', ms=4, capsize=2.5, color=colors_p[j], lw=1.8, label=PARAM_NAMES[j])
+            ax_c2.errorbar(df_p['N_base'], df_p['ST_M_final'], yerr=df_p['ST_conf_M_final'], marker='o', ms=4, capsize=2.5, color=colors_p[j], lw=1.8, label=PARAM_NAMES[j])
     else:
         for j in range(D):
             st_tc_curve = []

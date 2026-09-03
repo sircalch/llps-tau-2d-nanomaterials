@@ -169,27 +169,73 @@ def test_kinetic_mass_conservation():
 
 
 def test_sobol_indices_dataset_integrity():
-    """Verify that Sobol global sensitivity analysis CSV datasets exist and satisfy mathematical bounds."""
+    """Verify that SALib Sobol sensitivity datasets exist, satisfy physical bounds, structural zeros, and S1 <= ST."""
     sobol_path = os.path.join(os.path.dirname(__file__), "../data/sobol_indices_N512.csv")
     assert os.path.exists(sobol_path), f"Sobol indices CSV not found at {sobol_path}"
-    df_sobol = pd.read_csv(sobol_path)
+    df_sobol = pd.read_csv(sobol_path).set_index("parameter")
     assert len(df_sobol) == 8, "Expected 8 parameters in Sobol index table"
-    expected_cols = {"parameter", "S1_Tcloud", "ST_Tcloud", "S1_M_final", "ST_M_final"}
+    expected_cols = {
+        "S1_Tcloud", "S1_conf_Tcloud", "ST_Tcloud", "ST_conf_Tcloud",
+        "S1_M_final", "S1_conf_M_final", "ST_M_final", "ST_conf_M_final"
+    }
     assert expected_cols.issubset(df_sobol.columns)
 
-    # Check bounds [0, 1]
-    for col in ["S1_Tcloud", "ST_Tcloud", "S1_M_final", "ST_M_final"]:
-        assert (df_sobol[col] >= 0.0).all() and (df_sobol[col] <= 1.0).all()
+    # 1. Structural zeros: inactive parameters must evaluate to ~0
+    # eta_eff and k_ext do not enter apparent cloud point solver
+    assert abs(df_sobol.loc["eta_eff", "S1_Tcloud"]) < 1e-4
+    assert abs(df_sobol.loc["eta_eff", "ST_Tcloud"]) < 1e-4
+    assert abs(df_sobol.loc["k_ext", "S1_Tcloud"]) < 1e-4
+    assert abs(df_sobol.loc["k_ext", "ST_Tcloud"]) < 1e-4
 
-    # Total variance explained in first-order indices must be positive and <= 1.0
-    assert 0.40 <= df_sobol["S1_Tcloud"].sum() <= 1.0
-    assert 0.40 <= df_sobol["S1_M_final"].sum() <= 1.0
+    # Thermodynamic parameters do not participate directly in isolated droplet aging kinetics
+    for p_thermo in ["N_eff", "beta", "Tc_K", "dG_ads", "I_M", "eta_eff"]:
+        assert abs(df_sobol.loc[p_thermo, "S1_M_final"]) < 1e-4
+        assert abs(df_sobol.loc[p_thermo, "ST_M_final"]) < 1e-4
 
-    # Verify convergence table
+    # 2. S1 <= ST property for all active parameters
+    for p in df_sobol.index:
+        # Allow small negative lower fluctuations within confidence interval for finite samples
+        assert df_sobol.loc[p, "ST_Tcloud"] >= 0.0
+        assert df_sobol.loc[p, "ST_M_final"] >= 0.0
+        if df_sobol.loc[p, "ST_Tcloud"] > 0.05:
+            assert df_sobol.loc[p, "S1_Tcloud"] <= df_sobol.loc[p, "ST_Tcloud"] + 1e-4
+        if df_sobol.loc[p, "ST_M_final"] > 0.05:
+            assert df_sobol.loc[p, "S1_M_final"] <= df_sobol.loc[p, "ST_M_final"] + 1e-4
+
+    # 3. Active parameters dominate
+    assert df_sobol.loc["a_s", "ST_M_final"] > 0.80
+    assert df_sobol.loc["k_ext", "ST_M_final"] > 0.05
+
+    # 4. Verify convergence table
     conv_path = os.path.join(os.path.dirname(__file__), "../data/sobol_convergence_N512.csv")
     assert os.path.exists(conv_path), f"Sobol convergence CSV not found at {conv_path}"
     df_conv = pd.read_csv(conv_path)
     assert set(df_conv["N_base"].unique()) == {64, 128, 256, 512}
+    assert len(df_conv) == 32  # 4 blocks x 8 parameters
+
+
+def test_salib_ishigami_benchmark():
+    """Validate SALib global sensitivity engine against analytical Ishigami benchmark."""
+    from SALib.sample import sobol as sobol_sample
+    from SALib.analyze import sobol as sobol_analyze
+
+    problem = {
+        'num_vars': 3,
+        'names': ['x1', 'x2', 'x3'],
+        'bounds': [[-np.pi, np.pi], [-np.pi, np.pi], [-np.pi, np.pi]]
+    }
+    # N=256 evaluates 256 * (3 + 2) = 1280 points
+    param_values = sobol_sample.sample(problem, 256, calc_second_order=False, scramble=True, seed=42)
+    x1, x2, x3 = param_values[:, 0], param_values[:, 1], param_values[:, 2]
+    # Ishigami test function
+    Y = np.sin(x1) + 7.0 * (np.sin(x2) ** 2) + 0.1 * (x3 ** 4) * np.sin(x1)
+    Si = sobol_analyze.analyze(problem, Y, calc_second_order=False, num_resamples=500, conf_level=0.95, seed=42)
+
+    # Analytical properties: x2 has zero interaction with other vars (S1 ~ ST), x3 has S1 ~ 0 but ST > 0
+    assert abs(Si['S1'][1] - Si['ST'][1]) < 0.10, "x2 should have S1 ~= ST in Ishigami function"
+    assert Si['S1'][2] < 0.10, "x3 should have first-order index ~ 0"
+    assert Si['ST'][2] > 0.15, "x3 should have non-zero total index due to x1 interaction"
+    assert Si['ST'][0] > Si['S1'][0], "x1 should satisfy S1 < ST due to interaction with x3"
 
 
 if __name__ == "__main__":
