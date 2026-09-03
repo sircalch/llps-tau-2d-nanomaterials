@@ -132,8 +132,6 @@ def generate_figure_1():
     plt.savefig(f"{out_base}.png", dpi=300, bbox_inches='tight', pad_inches=0.15)
     plt.savefig(f"{out_base}.pdf", bbox_inches='tight', pad_inches=0.15)
     plt.savefig(f"{out_base}.tif", dpi=600, bbox_inches='tight', pad_inches=0.15)
-    # Legacy compatibility copy
-    plt.savefig("figures/Figure_1_Tau_LLPS_Phase_Diagram_2D_Interface.png", dpi=300, bbox_inches='tight', pad_inches=0.15)
     print(f"Figure 1 saved: {out_base}.png (.pdf, .tif)")
     plt.close()
 
@@ -312,8 +310,9 @@ def generate_figure_3():
     ax.set_xlabel(r"Temperature, $T\ (^\circ\mathrm{C})$", fontsize=10.0, fontweight='bold')
     ax.set_ylabel(r"Contact Angle, $\theta_c$ (degrees)", fontsize=10.0, fontweight='bold')
     ax.set_title(r"(b) Condensate Wetting Angle $\theta_c(T)$" + "\n" + r"(Young's Eq. with Monte Carlo 95% CI)", fontsize=10.0, fontweight='bold')
-    ax.set_xlim(15, 50); ax.set_ylim(35, 90); ax.grid(True, ls=':', alpha=0.45)
-    ax.legend(frameon=True, facecolor='white', edgecolor='#CBD5E1', fontsize=7.5, loc='upper left')
+    # Widened lower bound so the MXene Monte-Carlo band is not clipped at low temperature.
+    ax.set_xlim(15, 50); ax.set_ylim(20, 95); ax.grid(True, ls=':', alpha=0.45)
+    ax.legend(frameon=True, facecolor='white', edgecolor='#CBD5E1', fontsize=7.2, loc='lower right')
 
     # (c) Solidification Lag Time tau_lag
     ax = axes[1, 0]
@@ -322,7 +321,7 @@ def generate_figure_3():
     ax.set_xlabel(r"Nanosheet Loading, $C_{nano}\ (\mu\mathrm{g/mL})$", fontsize=10.0, fontweight='bold', labelpad=6)
     ax.set_ylabel(r"Solidification Lag Time, $\tau_{lag}$ (h)", fontsize=10.0, fontweight='bold')
     ax.set_title(r"(c) Model-Predicted Lag Time $\tau_{lag}$" + "\n" + r"(Threshold: $0.10 \cdot M_{control}$)", fontsize=10.0, fontweight='bold')
-    ax.set_xlim(0, 100); ax.set_ylim(2.5, 4.0); ax.grid(True, ls=':', alpha=0.45)
+    ax.set_xlim(0, 100); ax.set_ylim(2.6, 3.3); ax.grid(True, ls=':', alpha=0.45)
     ax.legend(frameon=True, facecolor='white', edgecolor='#CBD5E1', fontsize=8.0)
 
     # (d) Final Fibril Mass M_final
@@ -340,8 +339,6 @@ def generate_figure_3():
     plt.savefig(f"{out_base}.png", dpi=300)
     plt.savefig(f"{out_base}.pdf")
     plt.savefig(f"{out_base}.tif", dpi=600)
-    # Legacy compatibility copy
-    plt.savefig("figures/Figure_5_Borophene_vs_MXene_Comparison.png", dpi=300)
     print(f"Figure 3 (Material Comparison) saved: {out_base}.png (.pdf, .tif)")
     plt.close()
 
@@ -380,13 +377,17 @@ def generate_figure_4():
     ax2.set_xlim(0, 24); ax2.set_ylim(-0.02, 0.65); ax2.grid(True, ls=':', alpha=0.45)
 
     ax3 = axes[1, 0]
+    m_ads_peak = 0.0
     for idx, a in enumerate(a_s_loadings):
         r = kin.simulate(t_span=(0, 24), phi_0=0.60, a_s_nm_inv=a)
         ax3.plot(r["time"], r["m_ads"], color=colors[idx], lw=2.2, label=labels[idx])
+        m_ads_peak = max(m_ads_peak, float(np.max(r["m_ads"])))
     ax3.set_xlabel("Aging Time, $t$ (hours)", fontsize=10.0, fontweight='bold')
     ax3.set_ylabel(r"Adsorbed Mass Fraction, $m_{ads}(t)$", fontsize=10.0, fontweight='bold')
     ax3.set_title(r"(c) Interfacial Monomer Sequestration", fontsize=10.5, fontweight='bold')
-    ax3.set_xlim(0, 24); ax3.set_ylim(-0.005, 0.040); ax3.grid(True, ls=':', alpha=0.45)
+    # Auto-scale so the highest-loading trajectory is fully contained (was clipped at 0.040).
+    ax3.set_xlim(0, 24); ax3.set_ylim(-0.02 * m_ads_peak, 1.15 * m_ads_peak); ax3.grid(True, ls=':', alpha=0.45)
+    ax3.legend(frameon=True, facecolor='white', edgecolor='#CBD5E1', fontsize=8.0, loc='upper right')
 
     ax4 = axes[1, 1]
     C_grid = np.linspace(0.0, 100.0, 40)
@@ -395,7 +396,7 @@ def generate_figure_4():
     ax4.set_xlabel(r"Nanosheet Loading, $C_{nano}\ (\mu\mathrm{g/mL})$", fontsize=10.0, fontweight='bold')
     ax4.set_ylabel(r"Lag Time, $\tau_{lag}$ (hours)", fontsize=10.0, fontweight='bold')
     ax4.set_title(r"(d) Fibrillation Lag Time vs 2D Loading", fontsize=10.5, fontweight='bold')
-    ax4.set_xlim(0, 100); ax4.set_ylim(2.5, 3.5); ax4.grid(True, ls=':', alpha=0.45)
+    ax4.set_xlim(0, 100); ax4.set_ylim(2.6, 3.1); ax4.grid(True, ls=':', alpha=0.45)
     ax4.legend(frameon=True, facecolor='white', edgecolor='#CBD5E1', fontsize=8.2, loc='upper left')
 
     plt.tight_layout()
@@ -403,8 +404,6 @@ def generate_figure_4():
     plt.savefig(f"{out_base}.png", dpi=300, bbox_inches='tight', pad_inches=0.15)
     plt.savefig(f"{out_base}.pdf", bbox_inches='tight', pad_inches=0.15)
     plt.savefig(f"{out_base}.tif", dpi=600, bbox_inches='tight', pad_inches=0.15)
-    # Legacy compatibility copy
-    plt.savefig("figures/Figure_3_Condensate_Aging_and_Fibrillation_Arrest.png", dpi=300, bbox_inches='tight', pad_inches=0.15)
     print(f"Figure 4 (Kinetics) saved: {out_base}.png (.pdf, .tif)")
     plt.close()
 
@@ -501,8 +500,6 @@ def generate_figure_5():
     plt.savefig(f"{out_base}.png", dpi=300, bbox_inches='tight', pad_inches=0.15)
     plt.savefig(f"{out_base}.pdf", bbox_inches='tight', pad_inches=0.15)
     plt.savefig(f"{out_base}.tif", dpi=600, bbox_inches='tight', pad_inches=0.15)
-    # Legacy compatibility copy
-    plt.savefig("figures/Figure_4_Sobol_Sensitivity_LLPS.png", dpi=300, bbox_inches='tight', pad_inches=0.15)
     print(f"Figure 5 (Sobol 4-Panel) saved: {out_base}.png (.pdf, .tif)")
     plt.close()
 

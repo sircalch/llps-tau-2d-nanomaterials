@@ -13,8 +13,10 @@ Dimensional and Physical Architecture:
    - m_ads(t):     Protein mass fraction sequestered at 2D nanosheet interface
 
 2. Dimensionless Surface Capacity on Order-Parameter Scale:
-   - m_tilde_max = s_phi * (a_s * Gamma_max * 1e27) / N_A
-     where s_phi = 9.50e-4 uM^-1, [a_s] = nm^-1, [Gamma_max] = nm^-2.
+   - m_tilde_max = s_phi * (a_s * Gamma_max * 1e30) / N_A
+     where s_phi = 9.50e-4 uM^-1, [a_s] = nm^-1, [Gamma_max] = nm^-2
+     (1e30 folds the nm^-3 -> m^-3 conversion, 1e27, and the mol/m^3 -> uM factor, 1e3;
+     evaluated via material_parameters.calculate_m_tilde_max for a single source of truth).
    - theta_sat = m_ads / (m_tilde_max + 1e-12)  (Strictly dimensionless!)
 
 3. Microscopic Reaction Fluxes [h^-1]:
@@ -117,26 +119,32 @@ class CondensateAgingKinetics:
         M_drop    = np.maximum(0.0, sol.y[2])
         m_ads     = np.maximum(0.0, sol.y[3])
 
-        # Control simulation to define fixed absolute lag threshold: 10% of M_control(72 h)
-        if a_s_nm_inv == 0.0:
-            M_ctrl_72 = M_drop[-1]
-        else:
-            sol_ctrl = solve_ivp(
-                fun=lambda t, y: self._derivatives(t, y, 0.0),
-                t_span=(0.0, 72.0),
-                y0=[float(phi_0), 1e-6, 0.0, 0.0],
-                method='LSODA',
-                rtol=1e-7,
-                atol=1e-9
-            )
-            M_ctrl_72 = sol_ctrl.y[2][-1]
+        # Control simulation to define fixed absolute lag threshold: 10% of M_control(72 h).
+        # Always integrated to 72 h (independent of a_s and of the requested t_span) so the
+        # threshold is a single well-defined constant across every loading in a sweep.
+        sol_ctrl = solve_ivp(
+            fun=lambda t, y: self._derivatives(t, y, 0.0),
+            t_span=(0.0, 72.0),
+            y0=[float(phi_0), 1e-6, 0.0, 0.0],
+            method='LSODA',
+            rtol=1e-7,
+            atol=1e-9
+        )
+        M_ctrl_72 = float(sol_ctrl.y[2][-1])
 
         threshold = 0.10 * M_ctrl_72
         above_idx = np.where(M_drop >= threshold)[0]
-        if len(above_idx) > 0:
-            t_lag = float(sol.t[above_idx[0]])
-        else:
+        if len(above_idx) == 0:
             t_lag = float(t_span[1] + 1.0)
+        elif above_idx[0] == 0:
+            t_lag = float(sol.t[0])
+        else:
+            # Linear interpolation of the threshold crossing between adjacent grid points,
+            # removing the t_eval-grid staircase artefact in tau_lag(a_s) sweeps.
+            i1 = int(above_idx[0]); i0 = i1 - 1
+            m0, m1 = float(M_drop[i0]), float(M_drop[i1])
+            t0, t1 = float(sol.t[i0]), float(sol.t[i1])
+            t_lag = float(t0 + (threshold - m0) * (t1 - t0) / (m1 - m0)) if m1 > m0 else t1
 
         # Exact mass conservation check:
         total_mass = phi_dense + M_drop + m_ads

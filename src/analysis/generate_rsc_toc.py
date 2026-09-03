@@ -36,7 +36,7 @@ def generate_toc_graphic():
     
     # Panel 2: 2D Nanomaterial Biointerface (Middle: 2.7 to 5.1)
     ax.add_patch(patches.FancyBboxPatch((2.7, 0.4), 2.3, 3.2, boxstyle='round,pad=0.02,rounding_size=0.15', facecolor='#F1F5F9', edgecolor='#CBD5E1', lw=0.8))
-    ax.text(3.85, 3.25, '2D Biointerface (as)', fontsize=6.2, weight='bold', color='#334155', ha='center')
+    ax.text(3.85, 3.25, r'2D Biointerface ($a_s$)', fontsize=5.6, weight='bold', color='#334155', ha='center')
     
     # Nanosheet representation (angled parallelogram)
     sheet = patches.Polygon([[3.1, 1.4], [4.4, 1.1], [4.6, 2.5], [3.3, 2.8]], 
@@ -64,7 +64,7 @@ def generate_toc_graphic():
     
     ax.text(6.55, 1.85, 'Droplets Dissolved', fontsize=6.2, weight='bold', color='#059669', ha='center')
     ax.text(6.55, 1.45, 'Aging Retarded', fontsize=5.8, weight='bold', color='#059669', ha='center')
-    ax.text(6.55, 0.60, 'Tcloud shifts to 29.4 °C', fontsize=4.8, weight='bold', color='#047857', ha='center')
+    ax.text(6.55, 0.60, r'$T_{\mathrm{cloud}}$ shifts to 29.4 ' + '°C', fontsize=4.8, weight='bold', color='#047857', ha='center')
     
     # Connecting transition arrow
     ax.annotate('', xy=(5.4, 1.9), xytext=(5.05, 1.9),

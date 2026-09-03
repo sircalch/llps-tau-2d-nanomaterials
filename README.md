@@ -24,14 +24,20 @@ This repository contains the statistical-thermodynamic, Cahn-Hilliard interfacia
 ```
 llps-tau-2d-nanomaterials/
 ├── manuscript/
-│   └── manuscript_LLPS_Tau_2D_Nanomaterials.docx  # Official master Word manuscript
-├── figures/
-│   ├── Graphical_Abstract.png                      # Graphical abstract
-│   ├── Figure_1_Tau_LLPS_Phase_Diagram_2D_Interface.png
-│   ├── Figure_2_Wetting_and_Salt_Phase_Diagrams.png
-│   ├── Figure_3_Condensate_Aging_and_Fibrillation_Arrest.png
-│   ├── Figure_4_Sobol_Sensitivity_LLPS.png
-│   └── Figure_5_Borophene_vs_MXene_Comparison.png
+│   ├── manuscript_LLPS_Tau_2D_Nanomaterials.docx   # Official master Word manuscript
+│   ├── cover_letter_Soft_Matter.docx / .md         # Editor cover letter
+├── figures/                                        # Each figure: .png (300 dpi) + .pdf (vector) + .tif (600 dpi, git-ignored)
+│   ├── Figure_1_Tau_LLPS_Phase_Diagram.*           # Bulk LCST phase diagram & adsorption depletion
+│   ├── Figure_2_Wetting_and_Salt_Phase_Diagrams.*  # Salt screening & Cahn-Hilliard wetting map
+│   ├── Figure_3_Borophene_vs_MXene_Comparison.*    # T_cloud^app, theta_c(T), tau_lag, M_final
+│   ├── Figure_4_Condensate_Aging_Kinetics.*        # Mass-conserving master-equation trajectories
+│   ├── Figure_5_Sobol_Sensitivity_Analysis.*       # Saltelli-Jansen Sobol GSA & block convergence
+│   └── TOC_Graphic_RSC_Soft_Matter.*              # 8 cm x 4 cm table-of-contents graphic
+├── data/
+│   ├── ambadipudi_2017_fig2b_K18_pH8p8.csv         # Digitized experimental turbidity (Ambadipudi 2017)
+│   ├── sobol_indices_N512.csv                      # Sobol S1 / ST with 95% bootstrap CI
+│   ├── sobol_convergence_N512.csv                  # Dyadic sub-block convergence table
+│   └── sobol_evaluations_N512.npz                  # Raw 5120 physical model evaluations
 ├── src/
 │   ├── thermodynamics/
 │   │   ├── material_parameters.py                  # Audited biological & material constants
@@ -40,9 +46,14 @@ llps-tau-2d-nanomaterials/
 │   ├── kinetics/
 │   │   └── condensate_aging_kinetics.py            # Mass-conserving master equations
 │   └── analysis/
-│       └── generate_master_figures.py              # 300 DPI master figure renderer
+│       ├── generate_master_figures.py              # Figures 1-5 (PNG 300 dpi / PDF / TIFF 600 dpi)
+│       └── generate_rsc_toc.py                     # RSC TOC graphic renderer
+├── scratch/
+│   ├── run_salib_sobol.py                          # Regenerates data/sobol_*  (heavy: 5120 evals)
+│   ├── build_single_master_manuscript.py           # Compiles the master DOCX
+│   └── build_cover_letter.py                       # Compiles the cover letter
 ├── tests/
-│   └── test_thermodynamics_and_conversions.py     # Unit test suite
+│   └── test_thermodynamics_and_conversions.py      # 11-test unit suite
 ├── run_pipeline.py                                 # Single master reproducibility script
 ├── requirements.txt
 ├── LICENSE
@@ -65,7 +76,10 @@ pip install -r requirements.txt
 
 ### 2. Run the Full Pipeline
 
-Execute the master reproduction pipeline (runs unit tests, generates all 5 figures at 300 DPI, and recompiles the master DOCX):
+Execute the master reproduction pipeline. It runs the unit test suite, regenerates all
+five master figures (PNG 300 dpi + vector PDF + TIFF 600 dpi) and the RSC TOC graphic,
+recompiles the master DOCX manuscript and the cover letter, and rebuilds the
+distribution ZIP:
 
 ```bash
 python run_pipeline.py
@@ -75,6 +89,16 @@ python run_pipeline.py
 
 ```bash
 pytest tests/
+```
+
+### 4. Regenerate the Global Sensitivity Analysis (optional, heavy)
+
+The Sobol datasets in `data/` are committed so the pipeline and figures are fully
+reproducible without a long recompute. To regenerate them from scratch
+(5120 physical model evaluations, parallelised; several minutes):
+
+```bash
+python scratch/run_salib_sobol.py
 ```
 
 ---
