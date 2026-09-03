@@ -181,18 +181,27 @@ class FloryHugginsVoornOverbeek:
         return float(r1.x), float(r2.x)
 
     def find_spinodal_points(self, T_K=310.15, I_M=0.155):
-        """Numerically determined spinodal instability roots."""
+        """
+        Spinodal instability roots (d2f/dphi2 = 0) on each side of the critical point.
+        The zero crossing is linearly interpolated within the bracketing grid cell so the
+        spinodal curve is smooth in T (a coarse grid alone quantises the root and produces
+        stair-step / vertical artefacts in the phase-diagram figure).
+        """
         if self.chi(T_K) <= self.chi_c:
             return None, None
-        grid1 = np.linspace(1e-4, self.phi_c, 100)
-        grid2 = np.linspace(self.phi_c, 0.999, 100)
-        v1 = [self.spinodal_derivative(p, T_K, I_M) for p in grid1]
-        v2 = [self.spinodal_derivative(p, T_K, I_M) for p in grid2]
-        idx1 = np.where(np.diff(np.sign(v1)))[0]
-        idx2 = np.where(np.diff(np.sign(v2)))[0]
-        sp1 = float(grid1[idx1[0]]) if len(idx1) > 0 else None
-        sp2 = float(grid2[idx2[0]]) if len(idx2) > 0 else None
-        return sp1, sp2
+
+        def branch_root(lo, hi):
+            g = np.linspace(lo, hi, 400)
+            v = np.array([self.spinodal_derivative(p, T_K, I_M) for p in g])
+            idx = np.where(np.diff(np.sign(v)) != 0)[0]
+            if len(idx) == 0:
+                return None
+            i = int(idx[0]); v0, v1 = float(v[i]), float(v[i + 1])
+            if v1 == v0:
+                return float(g[i])
+            return float(g[i] - v0 * (g[i + 1] - g[i]) / (v1 - v0))
+
+        return branch_root(1e-4, self.phi_c), branch_root(self.phi_c, 0.999)
 
     def calculate_apparent_cloud_point(self, a_s_nm_inv=0.0, material="borophene", phi_total=0.095,
                                        I_M=0.155, dG_ads=None, Gamma_max=None,
