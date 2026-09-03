@@ -1,0 +1,37 @@
+{
+  "title": "Thermodynamic modulation of Tau liquid-liquid phase separation and condensate wetting by two-dimensional nanomaterial interfaces: emergent suppression via adsorption equilibrium (simulation code and data)",
+  "description": "<p>Statistical-thermodynamic, Cahn-Hilliard interfacial-gradient, and chemical master-equation code supporting the manuscript of the same name.</p><p>The repository contains a calibrated Flory-Huggins-Voorn-Overbeek engine for the Tau K18 lower critical solution temperature, a Langmuir interfacial adsorption mass balance, a fully dimensionalised Cahn-Hilliard wetting / Young contact-angle solver, mass-conserving condensate-aging master equations, and a Saltelli-Jansen Sobol global sensitivity analysis (N_base = 1024, 10240 physical model evaluations). A single script (run_pipeline.py) reproduces the unit-test suite, all five master figures (300 dpi PNG, vector PDF, 600 dpi TIFF), the RSC table-of-contents graphic, the master manuscript and cover letter, and the distribution archive. Continuous integration runs the test suite on Linux and Windows for Python 3.10-3.12.</p>",
+  "upload_type": "software",
+  "access_right": "open",
+  "license": "MIT",
+  "creators": [
+    { "name": "Monreal Hernández, Andrés", "affiliation": "Universidad Estatal de Sonora, Hermosillo, Sonora, Mexico" },
+    { "name": "Muñoz Bautista, Jesús Martín", "affiliation": "Departamento de Investigación y Posgrado en Alimentos (DIPA), Universidad de Sonora, Hermosillo, Sonora, Mexico" },
+    { "name": "Franco Amaya, Sara Lizbeth", "affiliation": "Doctorado en Nanotecnología, Departamento de Física, Universidad de Sonora, Hermosillo, Sonora, Mexico" },
+    { "name": "Martínez Osorio, Carlos Ivanhoe", "affiliation": "Doctorado en Ciencia de Materiales, Departamento de Investigación en Polímeros y Materiales (DIPM), Universidad de Sonora, Hermosillo, Sonora, Mexico" }
+  ],
+  "keywords": [
+    "liquid-liquid phase separation",
+    "biomolecular condensates",
+    "Tau protein",
+    "intrinsically disordered proteins",
+    "two-dimensional nanomaterials",
+    "borophene",
+    "MXene",
+    "Flory-Huggins-Voorn-Overbeek theory",
+    "Cahn-Hilliard wetting",
+    "Langmuir adsorption",
+    "amyloid aging kinetics",
+    "Sobol global sensitivity analysis",
+    "soft matter",
+    "computational biophysics"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/sircalch/llps-tau-2d-nanomaterials",
+      "relation": "isSupplementTo",
+      "resource_type": "software",
+      "scheme": "url"
+    }
+  ]
+}
