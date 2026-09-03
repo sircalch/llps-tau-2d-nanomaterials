@@ -128,9 +128,13 @@ def generate_figure_1():
     ax2.grid(True, ls=':', alpha=0.45)
     ax2.legend(frameon=True, facecolor='white', edgecolor='#CBD5E1', fontsize=7.8, loc='upper right')
 
-    out = "figures/Figure_1_Tau_LLPS_Phase_Diagram_2D_Interface.png"
-    plt.savefig(out, bbox_inches='tight', pad_inches=0.15)
-    print(f"Figure 1 saved: {out}")
+    out_base = "figures/Figure_1_Tau_LLPS_Phase_Diagram"
+    plt.savefig(f"{out_base}.png", dpi=300, bbox_inches='tight', pad_inches=0.15)
+    plt.savefig(f"{out_base}.pdf", bbox_inches='tight', pad_inches=0.15)
+    plt.savefig(f"{out_base}.tif", dpi=600, bbox_inches='tight', pad_inches=0.15)
+    # Legacy compatibility copy
+    plt.savefig("figures/Figure_1_Tau_LLPS_Phase_Diagram_2D_Interface.png", dpi=300, bbox_inches='tight', pad_inches=0.15)
+    print(f"Figure 1 saved: {out_base}.png (.pdf, .tif)")
     plt.close()
 
 # =======================================================================
@@ -196,9 +200,11 @@ def generate_figure_2():
     ax2.legend(frameon=True, facecolor='white', edgecolor='#CBD5E1', fontsize=7.5, loc='upper left')
 
     plt.tight_layout()
-    out = "figures/Figure_2_Wetting_and_Salt_Phase_Diagrams.png"
-    plt.savefig(out, bbox_inches='tight', pad_inches=0.15)
-    print(f"Figure 2 saved: {out}")
+    out_base = "figures/Figure_2_Wetting_and_Salt_Phase_Diagrams"
+    plt.savefig(f"{out_base}.png", dpi=300, bbox_inches='tight', pad_inches=0.15)
+    plt.savefig(f"{out_base}.pdf", bbox_inches='tight', pad_inches=0.15)
+    plt.savefig(f"{out_base}.tif", dpi=600, bbox_inches='tight', pad_inches=0.15)
+    print(f"Figure 2 saved: {out_base}.png (.pdf, .tif)")
     plt.close()
 
 # =======================================================================
@@ -330,9 +336,13 @@ def generate_figure_3():
     ax.legend(frameon=True, facecolor='white', edgecolor='#CBD5E1', fontsize=8.0)
 
     plt.subplots_adjust(hspace=0.35, wspace=0.28, bottom=0.10)
-    out = "figures/Figure_5_Borophene_vs_MXene_Comparison.png"
-    plt.savefig(out, dpi=300)
-    print(f"Figure 3 (Material Comparison) saved: {out}")
+    out_base = "figures/Figure_3_Borophene_vs_MXene_Comparison"
+    plt.savefig(f"{out_base}.png", dpi=300)
+    plt.savefig(f"{out_base}.pdf")
+    plt.savefig(f"{out_base}.tif", dpi=600)
+    # Legacy compatibility copy
+    plt.savefig("figures/Figure_5_Borophene_vs_MXene_Comparison.png", dpi=300)
+    print(f"Figure 3 (Material Comparison) saved: {out_base}.png (.pdf, .tif)")
     plt.close()
 
 # =======================================================================
@@ -389,9 +399,13 @@ def generate_figure_4():
     ax4.legend(frameon=True, facecolor='white', edgecolor='#CBD5E1', fontsize=8.2, loc='upper left')
 
     plt.tight_layout()
-    out = "figures/Figure_3_Condensate_Aging_and_Fibrillation_Arrest.png"
-    plt.savefig(out, bbox_inches='tight', pad_inches=0.15)
-    print(f"Figure 4 (Kinetics) saved: {out}")
+    out_base = "figures/Figure_4_Condensate_Aging_Kinetics"
+    plt.savefig(f"{out_base}.png", dpi=300, bbox_inches='tight', pad_inches=0.15)
+    plt.savefig(f"{out_base}.pdf", bbox_inches='tight', pad_inches=0.15)
+    plt.savefig(f"{out_base}.tif", dpi=600, bbox_inches='tight', pad_inches=0.15)
+    # Legacy compatibility copy
+    plt.savefig("figures/Figure_3_Condensate_Aging_and_Fibrillation_Arrest.png", dpi=300, bbox_inches='tight', pad_inches=0.15)
+    print(f"Figure 4 (Kinetics) saved: {out_base}.png (.pdf, .tif)")
     plt.close()
 
 # =======================================================================
@@ -405,9 +419,9 @@ def generate_figure_5():
         r"$\eta_{eff}$", r"$k_{ext}$"
     ]
     PARAM_DESCRIP = [
-        r"$N_{eff}$ (Chain Length)", r"$\beta$ (LCST Slope)", r"$T_c$ (Critical Temp)",
-        r"$\Delta G_{ads}$ (Adsorption)", r"$a_s$ (Area Density)", r"$I$ (Ionic Strength)",
-        r"$\eta_{eff}$ (Coupling Factor)", r"$k_{ext}$ (Extraction Rate)"
+        r"Segment $N_{eff}$", r"LCST slope $\beta$", r"Crit. $T_c$",
+        r"$\Delta G_{ads}$", r"Area $a_s$", r"Ionic $I$",
+        r"Anchor $\eta_{eff}$", r"Extr. $k_{ext}$"
     ]
     D = len(PARAM_NAMES)
     N_base = 512  # 512 * (D+2) = 5120 physical evaluations; scrambled Sobol, seed=42, Jansen estimator
@@ -483,9 +497,13 @@ def generate_figure_5():
     ax_c2.grid(True, ls=':', alpha=0.45); ax_c2.legend(fontsize=7.2, loc='upper right', ncol=2)
 
     plt.tight_layout()
-    out = "figures/Figure_4_Sobol_Sensitivity_LLPS.png"
-    plt.savefig(out, bbox_inches='tight', pad_inches=0.15)
-    print(f"Figure 5 (Sobol 4-Panel) saved: {out}")
+    out_base = "figures/Figure_5_Sobol_Sensitivity_Analysis"
+    plt.savefig(f"{out_base}.png", dpi=300, bbox_inches='tight', pad_inches=0.15)
+    plt.savefig(f"{out_base}.pdf", bbox_inches='tight', pad_inches=0.15)
+    plt.savefig(f"{out_base}.tif", dpi=600, bbox_inches='tight', pad_inches=0.15)
+    # Legacy compatibility copy
+    plt.savefig("figures/Figure_4_Sobol_Sensitivity_LLPS.png", dpi=300, bbox_inches='tight', pad_inches=0.15)
+    print(f"Figure 5 (Sobol 4-Panel) saved: {out_base}.png (.pdf, .tif)")
     plt.close()
 
 if __name__ == "__main__":

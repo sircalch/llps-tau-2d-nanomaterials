@@ -63,3 +63,7 @@ venv.bak/
 
 # Temporary scratch outputs
 scratch/*.tmp
+
+# Production publication masters (TIFF >100MB)
+*.tif
+*.tiff
