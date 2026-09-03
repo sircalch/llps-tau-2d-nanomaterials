@@ -238,6 +238,36 @@ def test_salib_ishigami_benchmark():
     assert Si['ST'][0] > Si['S1'][0], "x1 should satisfy S1 < ST due to interaction with x3"
 
 
+def test_sobol_prefix_consistency_and_shapes():
+    """Verify SALib interleaved stride step=D+2, prefix shapes, and that N=512 convergence reproduces main dataset."""
+    eval_path = os.path.join(os.path.dirname(__file__), "../data/sobol_evaluations_N512.npz")
+    assert os.path.exists(eval_path), f"Sobol evaluations archive not found at {eval_path}"
+    raw = np.load(eval_path)
+    Y_Tc, Y_M = raw['Y_Tc'], raw['Y_M']
+
+    D = 8
+    step = D + 2  # 10
+    assert len(Y_Tc) == 512 * step
+    assert len(Y_M) == 512 * step
+
+    # Verify sub-block shapes
+    for n in [64, 128, 256, 512]:
+        expected_rows = n * step
+        assert len(Y_Tc[:expected_rows]) == expected_rows
+        assert len(Y_M[:expected_rows]) == expected_rows
+
+    # Verify that convergence row at N=512 matches main indices to <= 1e-4
+    csv_main = pd.read_csv(os.path.join(os.path.dirname(__file__), "../data/sobol_indices_N512.csv")).set_index("parameter")
+    csv_conv = pd.read_csv(os.path.join(os.path.dirname(__file__), "../data/sobol_convergence_N512.csv"))
+    df_conv_512 = csv_conv[csv_conv["N_base"] == 512].set_index("parameter")
+
+    for p in csv_main.index:
+        assert abs(csv_main.loc[p, "ST_Tcloud"] - df_conv_512.loc[p, "ST_Tcloud"]) < 1e-4
+        assert abs(csv_main.loc[p, "ST_M_final"] - df_conv_512.loc[p, "ST_M_final"]) < 1e-4
+        assert abs(csv_main.loc[p, "S1_Tcloud"] - df_conv_512.loc[p, "S1_Tcloud"]) < 1e-4
+        assert abs(csv_main.loc[p, "S1_M_final"] - df_conv_512.loc[p, "S1_M_final"]) < 1e-4
+
+
 if __name__ == "__main__":
     test_dimensional_capacity_conversion()
     test_standard_thermodynamic_activity_and_coverage()

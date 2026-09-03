@@ -82,15 +82,11 @@ def main():
     print('\nComputing rigorous block convergence curves for N in [64, 128, 256, 512] from real evaluations...')
     conv_rows = []
     n_blocks = [64, 128, 256, 512]
+    step = D + 2
     for n in n_blocks:
-        sub_idx = np.concatenate([
-            np.arange(0, n),
-            np.arange(N_BASE, N_BASE + n)
-        ] + [
-            np.arange((2 + j) * N_BASE, (2 + j) * N_BASE + n) for j in range(D)
-        ])
-        sub_Y_Tc = Y_Tc[sub_idx]
-        sub_Y_M  = Y_M[sub_idx]
+        n_rows = n * step
+        sub_Y_Tc = Y_Tc[:n_rows]
+        sub_Y_M  = Y_M[:n_rows]
 
         sub_si_Tc = sobol_analyze.analyze(problem, sub_Y_Tc, calc_second_order=False, num_resamples=500, conf_level=0.95, seed=42)
         sub_si_M  = sobol_analyze.analyze(problem, sub_Y_M,  calc_second_order=False, num_resamples=500, conf_level=0.95, seed=42)
