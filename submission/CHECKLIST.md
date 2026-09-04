@@ -23,7 +23,7 @@
 
 ## Needs a value only you have ✎
 
-- [ ] **ORCID** for the corresponding author (portal usually mandatory); co-authors optional
+- [x] ~~ORCID for the corresponding author~~ — 0009-0009-1207-8597 (Andrés Monreal Hernández), now in PORTAL_FIELDS.md / CITATION.cff / .zenodo.json. Co-authors' ORCID still optional/unfilled.
 - [x] ~~Suggested reviewers: institutional emails~~ — filled in `PORTAL_FIELDS.md` §7 (from the cover letter); just double-check none has a conflict of interest with the authors
 - [ ] **Funding**: any CONACyT/SECIHTI doctoral scholarship or grant number → add to portal *and* to the manuscript Acknowledgements before final upload
 - [ ] **Open-access choice**: standard Licence to Publish (free) vs Gold OA — check whether UES/UNISON has an RSC Read & Publish / transformative agreement that waives the APC

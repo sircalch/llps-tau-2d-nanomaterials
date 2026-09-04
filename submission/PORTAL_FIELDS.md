@@ -35,7 +35,7 @@ liquid-liquid phase separation; Tau protein; two-dimensional nanomaterials; biom
 
 | # | Name | Affiliation | Corresponding | ORCID |
 |---|---|---|---|---|
-| 1 | Andrés Monreal Hernández | Universidad Estatal de Sonora, Ley Federal del Trabajo s/n, 83100 Hermosillo, Sonora, Mexico | **YES** — andres.monreal@ues.mx | `‹FILL›` |
+| 1 | Andrés Monreal Hernández | Universidad Estatal de Sonora, Ley Federal del Trabajo s/n, 83100 Hermosillo, Sonora, Mexico | **YES** — andres.monreal@ues.mx | 0009-0009-1207-8597 |
 | 2 | Jesús Martín Muñoz Bautista | Departamento de Investigación y Posgrado en Alimentos (DIPA), Universidad de Sonora, Blvd. Luis Encinas y Rosales, 83000 Hermosillo, Sonora, Mexico | no | `‹FILL / optional›` |
 | 3 | Sara Lizbeth Franco Amaya | Doctorado en Nanotecnología, Departamento de Física, Universidad de Sonora, Blvd. Luis Encinas y Rosales, 83000 Hermosillo, Sonora, Mexico | no | `‹FILL / optional›` |
 | 4 | Carlos Ivanhoe Martínez Osorio | Doctorado en Ciencia de Materiales, Departamento de Investigación en Polímeros y Materiales (DIPM), Universidad de Sonora, 83000 Hermosillo, Sonora, Mexico | no | `‹FILL / optional›` |
