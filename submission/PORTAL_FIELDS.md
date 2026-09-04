@@ -83,7 +83,7 @@ High-resolution 600 dpi TIFFs of every figure are produced by `run_pipeline.py`
 - **Conflicts of interest:** "There are no conflicts to declare."
 - **Data availability:** code and data openly on GitHub (https://github.com/sircalch/llps-tau-2d-nanomaterials, MIT) and permanently archived on Zenodo, DOI **10.5281/zenodo.22268507** (release v1.0.1).
 - **Author contributions:** CRediT, see §5 above.
-- **Acknowledgements / funding:** institutional support from Universidad Estatal de Sonora (UES) and Universidad de Sonora (UNISON). `‹add any CONACyT/SECIHTI scholarship or grant number here and in the manuscript Acknowledgements›`
+- **Acknowledgements / funding:** "This work received no external or third-party funding"; institutional/infrastructural support from Universidad Estatal de Sonora (UES) and Universidad de Sonora (UNISON). No grant number to declare in the portal's Funder field.
 - **Generative-AI declaration:** in the Acknowledgements — AI assistance used for code review, unit-test generation and manuscript formatting, all content verified under author responsibility; **all figures and the graphical abstract are deterministic matplotlib output with no AI-generated imagery.**
 
 ## 10. Portal confirmation checkboxes (typical RSC ScholarOne)
@@ -95,8 +95,8 @@ High-resolution 600 dpi TIFFs of every figure are produced by `run_pipeline.py`
 - [ ] Data availability statement included
 - [ ] Ethical statements — N/A (no human/animal subjects; purely computational)
 - [ ] Generative-AI use declared
-- [ ] Licence to Publish / open-access choice — `‹choose: standard Licence to Publish, or Gold open access if funded›`
+- [ ] Licence to Publish / open-access choice — **Standard Licence to Publish** (subscription route, no APC)
 
 ## 11. Funding / open-access
 
-Soft Matter is hybrid. `‹decide: (a) standard subscription route — free to publish; or (b) Gold OA APC — check if UNISON/UES has an RSC Read & Publish / transformative agreement that waives the APC (Mexico CONACyT consortia often do)›`
+**Decision: standard Licence to Publish, not Gold OA.** No external funding to cover an APC (~$2,500–3,000 USD unless UES/UNISON has an RSC Read & Publish agreement — worth a quick check with the library, but do not let this block or delay submission). The OA choice has zero effect on peer-review/acceptance; it only affects who can read the published PDF for free on day one. The code/data are already open via GitHub + Zenodo regardless of this choice, and RSC's standard policy allows self-archiving the accepted author manuscript after an embargo (Green OA) if open access is wanted later at no cost.

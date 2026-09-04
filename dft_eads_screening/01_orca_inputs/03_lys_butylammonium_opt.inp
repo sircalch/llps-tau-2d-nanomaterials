@@ -1,0 +1,7 @@
+# 03_lys_butylammonium_opt
+! B3LYP D3BJ def2-SVP def2/J RIJCOSX CPCM(water) TightSCF DefGrid3 Opt
+%pal nprocs 16 end
+%maxcore 3000
+%scf MaxIter 300 end
+
+* xyzfile 1 1 ..\00_structures\lys_butylammonium.xyz
