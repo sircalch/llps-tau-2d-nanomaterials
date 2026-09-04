@@ -52,9 +52,16 @@ Upload `submission/upload/CoverLetter.docx` (or paste its text). It already cont
 required "importance and/or impact" statement, the thematic-fit argument, the four
 computational milestones, the GenAI disclosure and four suggested reviewers.
 
-## 7. Suggested reviewers  (from the cover letter — confirm current affiliations/emails)
+## 7. Suggested reviewers  (from the cover letter)
 
-`‹the cover letter names 4 international suggested reviewers — copy names + emails into the portal fields; add institutional emails where the portal requires them›`
+| Name | Affiliation | Expertise | Email |
+|---|---|---|---|
+| Prof. Rohit V. Pappu | Washington University in St. Louis | Intrinsically disordered proteins, polymer physics of biomolecular condensates, phase behavior | pappu@wustl.edu |
+| Prof. Tuomas P. J. Knowles | University of Cambridge | Protein aggregation kinetics, biomolecular phase transitions, amyloid nucleation theory | tpjk2@cam.ac.uk |
+| Prof. Yury Gogotsi | Drexel University | 2D nanomaterials, MXene surface chemistry, nanomaterial-biomolecule interfaces | gogotsi@drexel.edu |
+| Dr. Roland L. Knorr | Max Planck Institute of Colloids and Interfaces | Biomolecular condensate wetting, interfacial tension, membrane interactions | roland.knorr@mpikg.mpg.de |
+
+None of the four have a known conflict of interest with the authors (no shared institution, no recent co-authorship). Confirm this yourself before submitting — that check is only reliable on your side.
 
 Opposed reviewers: none.
 
