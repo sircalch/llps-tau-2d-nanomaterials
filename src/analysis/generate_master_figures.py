@@ -73,7 +73,7 @@ def generate_figure_1():
 
     # Critical point marker
     ax1.plot(phi_c, Tc_C, marker='o', markersize=7.0, color='#2563EB', mec='#0F172A', mew=1.2, zorder=5)
-    ax1.text(phi_c + 0.02, Tc_C - 0.2, r"Critical Point $(\phi_c = 0.246,\ T_c = 8.5^\circ\mathrm{C})$", fontsize=8.5, color='#1E3A8A', weight='bold')
+    ax1.text(phi_c + 0.02, Tc_C - 0.2, r"Critical Point $(\phi_c = 0.247,\ T_c = 8.5^\circ\mathrm{C})$", fontsize=8.5, color='#1E3A8A', weight='bold')
 
     # Experimental nominal state point: 100 uM Tau K18 (phi = 0.095) with theoretical cloud point at 15.3 °C
     t_cloud_nominal = fh.calculate_apparent_cloud_point(a_s_nm_inv=0.0, phi_total=0.095)
