@@ -70,3 +70,6 @@ scratch/*.tmp
 
 # Regenerable RSC portal upload bundle (built by scratch/build_submission_package.py)
 submission/upload/
+
+# Unrelated stray project accidentally added once - never track
+dft_eads_screening/
