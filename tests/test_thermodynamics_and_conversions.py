@@ -269,6 +269,85 @@ def test_sobol_prefix_consistency_and_shapes():
         assert abs(csv_main.loc[p, "S1_M_final"] - df_conv_top.loc[p, "S1_M_final"]) < 1e-4
 
 
+def test_binodal_independent_convex_hull_crosscheck():
+    """
+    Cross-check find_binodal_coexistence against a completely independent numerical
+    method: the geometric common-tangent construction via the lower convex hull of
+    f(phi) (classic Maxwell construction). No root() call, no initial guess, no code
+    path shared with the production solver -- if the two disagreed it would indicate a
+    systematic bug that internal self-consistency checks (mu1=mu2, Pi1=Pi2 evaluated
+    with the solver's own output) cannot catch.
+    """
+    from scipy.spatial import ConvexHull
+
+    def independent_binodal(fh, T_K, I_M=0.155, n=20000):
+        phis = np.linspace(1e-6, 1 - 1e-6, n)
+        fs = np.array([fh.free_energy_density(p, T_K, I_M) for p in phis])
+        pts = np.column_stack([phis, fs])
+        hull = ConvexHull(pts)
+        # lower hull = hull vertices whose edge to the next-lowest-phi vertex has
+        # everything above it; equivalently, sort vertices by phi and keep the
+        # lower boundary via a simple monotone-chain scan (robust, no assumptions
+        # about scipy's vertex ordering).
+        order = np.argsort(pts[hull.vertices, 0])
+        v = pts[hull.vertices][order]
+
+        def cross(o, a, b):
+            return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0])
+
+        lower = []
+        for p in v:
+            while len(lower) >= 2 and cross(lower[-2], lower[-1], p) <= 0:
+                lower.pop()
+            lower.append(p)
+        lower = np.array(lower)
+
+        # the binodal pair is the lower-hull edge that skips the most original grid
+        # points (the two-phase region excluded from the convex envelope)
+        hull_phi_idx = np.searchsorted(phis, lower[:, 0])
+        gaps = np.diff(hull_phi_idx)
+        k = int(np.argmax(gaps))
+        if gaps[k] <= 1:
+            return None, None
+        return float(lower[k, 0]), float(lower[k + 1, 0])
+
+    cases = [
+        (10.0, 281.65, 0.0090, 37.0, 0.155),
+        (10.0, 281.65, 0.0090, 20.0, 0.155),
+        (10.0, 281.65, 0.0090, 50.0, 0.155),
+        (10.0, 281.65, 0.0090, 45.0, 0.35),
+        (10.0, 281.65, 0.0090, 25.0, 0.05),
+        (6.0, 278.0, 0.012, 30.0, 0.2),
+        (18.0, 285.0, 0.006, 40.0, 0.1),
+    ]
+    for N, Tc, beta, T_C, I in cases:
+        fh = FloryHugginsVoornOverbeek(N=N, Tc_K=Tc, beta=beta)
+        T_K = T_C + 273.15
+        b1_root, b2_root = fh.find_binodal_coexistence(T_K, I_M=I)
+        b1_hull, b2_hull = independent_binodal(fh, T_K, I_M=I)
+        assert b1_root is not None and b1_hull is not None
+        # tolerance set by the 20000-point hull grid resolution (~5e-5), not by the
+        # solver's own precision -- this is checking agreement between two different
+        # numerical methods, not self-consistency of one
+        assert abs(b1_root - b1_hull) < 5e-4
+        assert abs(b2_root - b2_hull) < 5e-4
+
+
+def test_classic_flory_huggins_critical_point_limit():
+    """
+    With electrostatics off (alpha_DH=0), the numerically solved critical point
+    (from f''(phi_c)=0, f'''(phi_c)=0) must reduce to the textbook analytical
+    Flory-Huggins result: phi_c = 1/(1+sqrt(N)), chi_c = (1/2)(1+1/sqrt(N))^2.
+    Independent analytical cross-check of the critical-point solver itself.
+    """
+    for N in [1.0, 2.0, 5.0, 10.0, 20.0, 50.0, 100.0]:
+        fh = FloryHugginsVoornOverbeek(N=N, alpha_DH=0.0)
+        phi_c_analytical = 1.0 / (1.0 + np.sqrt(N))
+        chi_c_analytical = 0.5 * (1.0 + 1.0 / np.sqrt(N)) ** 2
+        assert np.isclose(fh.phi_c, phi_c_analytical, atol=1e-6)
+        assert np.isclose(fh.chi_c, chi_c_analytical, atol=1e-6)
+
+
 if __name__ == "__main__":
     import pytest
     sys.exit(pytest.main(["-v", __file__]))

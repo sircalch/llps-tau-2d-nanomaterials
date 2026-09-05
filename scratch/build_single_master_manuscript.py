@@ -101,7 +101,7 @@ AUDITED_REFERENCES = [
     "Alhabeb, M.; Maleski, K.; Anasori, B.; Lelyukh, P.; Clark, L.; Sin, S.; Gogotsi, Y. Guidelines for Synthesis and Processing of Two-Dimensional Titanium Carbide (Ti3C2Tx MXene). Chem. Mater. 2017, 29, 7633–7644.",
     "Gouveia, J. D.; Novell-Leruth, G.; Reis, P. M. L. S.; Viñes, F.; Illas, F.; Gomes, J. R. B. First-Principles Calculations on the Adsorption Behavior of Amino Acids on a Titanium Carbide MXene. ACS Appl. Bio Mater. 2020, 3, 5913–5921.",
     "Knowles, T. P. J.; Vendruscolo, M.; Dobson, C. M. The amyloid state and its association with protein misfolding diseases. Nat. Rev. Mol. Cell Biol. 2014, 15, 384–396.",
-    "Stelzl, L. S.; Pietrek, L. M.; Holla, A.; Oroz, J.; Sikora, M.; Köfinger, J.; Schuler, B.; Zweckstetter, M.; Hummer, G. Conformational Ensembles of the Human Tau Protein to Assess Its Function and Pathological Aggregation. JACS Au 2022, 2, 673–686."
+    "Stelzl, L. S.; Pietrek, L. M.; Holla, A.; Oroz, J.; Sikora, M.; Köfinger, J.; Schuler, B.; Zweckstetter, M.; Hummer, G. Global Structure of the Intrinsically Disordered Protein Tau Emerges from Its Local Structure. JACS Au 2022, 2, 673–686."
 ]
 
 def build_official_manuscript():

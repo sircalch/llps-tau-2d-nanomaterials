@@ -54,7 +54,7 @@ llps-tau-2d-nanomaterials/
 │   ├── build_single_master_manuscript.py           # Compiles the master DOCX
 │   └── build_cover_letter.py                       # Compiles the cover letter
 ├── tests/
-│   └── test_thermodynamics_and_conversions.py      # 11-test unit suite
+│   └── test_thermodynamics_and_conversions.py      # unit + cross-method validation suite
 ├── run_pipeline.py                                 # Single master reproducibility script
 ├── requirements.txt
 ├── LICENSE

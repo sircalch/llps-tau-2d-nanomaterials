@@ -23,7 +23,7 @@ def run_step(cmd, desc):
 
 def main():
     # 1. Run unit tests
-    run_step("-m pytest tests/ -v", "Step 1: Running all 11 unit tests and dimensional verifications")
+    run_step("-m pytest tests/ -v", "Step 1: Running all unit tests and dimensional verifications")
 
     # 2. Generate publication figures
     run_step("src/analysis/generate_master_figures.py", "Step 2: Generating all 5 Master Publication Figures (PNG, PDF, TIFF)")
