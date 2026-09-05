@@ -35,7 +35,7 @@ Comprehensive Physical and Bibliographic Ledger:
    - Ref 31: Stelzl et al., JACS Au 2022, 2, 673–686 (DOI: 10.1021/jacsau.1c00536)
 """
 
-import os
+import os, re
 import pandas as pd
 from docx import Document
 from docx.shared import Inches, Pt, RGBColor
@@ -43,6 +43,71 @@ from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.enum.table import WD_TABLE_ALIGNMENT
 from docx.oxml import parse_xml
 from docx.oxml.ns import nsdecls
+
+# --- lightweight math typesetting -------------------------------------------------
+# Applied to the already-interpolated display strings (never to source code), this
+# turns  x_sub / x^sup / x_{a,b} / x^(p/q)  into real subscript/superscript runs and
+# normalises a few compound tokens, so the DOCX shows properly set symbols instead
+# of literal "phi_tilde_free" / "T_cloud^app".
+_MATH_PRE = [
+    ("phi_tilde", "φ_tilde"),
+    ("m_tilde_max", "m̃_max"),
+    ("m_tilde", "m̃"),
+    ("φ_tilde", "φ̃"),
+    ("c_max_ads", "c_{max,ads}"),
+    ("sqrt(", "√("),
+    ("Tc_K", "T_{c,K}"),
+    ("Tc", "T_c"),
+    ("s_phi", "s_φ"),
+    ("phi_0", "φ_0"),
+    ("Gamma_max", "Γ_max"),
+    ("dG_ads", "ΔG_ads"),
+    ("Ti3C2Tx", "Ti₃C₂Tₓ"),
+    ("rho", "ρ"),
+    ("<=", "≤"), (">=", "≥"),
+]
+_COMPOUND_SUB_RE = re.compile(r"([A-Za-z0-9̃\)\]}])_([A-Za-z0-9]+)_([A-Za-z0-9]+)\b")
+_PROTECT_RE = re.compile(r"(https?://\S+|[\w./\-]+\.(?:csv|py|md|docx|json|npz|cff|yml))")
+_SUBSUP_RE = re.compile(r"([_^])(\{[^}]*\}|\([^)]*\)|[A-Za-z0-9Α-ω+]+)")
+
+def emit_math(paragraph, text, size=None, bold=False, italic=False):
+    for a, b in _MATH_PRE:
+        text = text.replace(a, b)
+    for _ in range(2):
+        text = _COMPOUND_SUB_RE.sub(r"\1_{\2,\3}", text)
+
+    def add(s, sub=False, sup=False):
+        if not s:
+            return
+        r = paragraph.add_run(s)
+        r.font.name = "Arial"
+        if size is not None:
+            r.font.size = size
+        r.font.bold = bold
+        r.font.italic = False if (sub or sup) else italic
+        if sub:
+            r.font.subscript = True
+        if sup:
+            r.font.superscript = True
+
+    def parse_segment(seg):
+        pos = 0
+        for m in _SUBSUP_RE.finditer(seg):
+            add(seg[pos:m.start()])
+            c = m.group(2)
+            if c and c[0] in "{(" and c[-1] in ")}":
+                c = c[1:-1]
+            c = c.replace("{", "").replace("}", "")
+            add(c, sub=(m.group(1) == "_"), sup=(m.group(1) == "^"))
+            pos = m.end()
+        add(seg[pos:])
+
+    last = 0
+    for m in _PROTECT_RE.finditer(text):
+        parse_segment(text[last:m.start()])
+        add(m.group(0))
+        last = m.end()
+    parse_segment(text[last:])
 
 def set_cell_background(cell, hex_color):
     tcPr = cell._tc.get_or_add_tcPr()
@@ -98,7 +163,7 @@ AUDITED_REFERENCES = [
     "Favetta, B.; Wang, H.; Shi, Z.; Schuster, B. S. Amphiphilic protein surfactants reduce the interfacial tension of biomolecular condensates. Langmuir 2025, 41, 23827–23836.",
     "Visser, M.; van Haren, M.; Lipiński, K.; van Leijenhorst-Groener, K.; Claessens, M.; Queirós, V.; Ramos, S.; Eeftens, J.; Spruijt, E. Controlling interfacial protein adsorption, desorption and aggregation in biomolecular condensates. Nat. Commun. 2025, 16, 10172.",
     "Sporbeck, K.; Ghosh, S.; Sankar, S.; Nagy-Herczeg, A.; Wegmann, S.; Agudo-Canalejo, J.; Knorr, R. L. Novel analysis method for condensate wetting identifies charge-dependent Tau-membrane interactions. PRX Life 2026, 4, 033014.",
-    "Alhabeb, M.; Maleski, K.; Anasori, B.; Lelyukh, P.; Clark, L.; Sin, S.; Gogotsi, Y. Guidelines for Synthesis and Processing of Two-Dimensional Titanium Carbide (Ti3C2Tx MXene). Chem. Mater. 2017, 29, 7633–7644.",
+    "Alhabeb, M.; Maleski, K.; Anasori, B.; Lelyukh, P.; Clark, L.; Sin, S.; Gogotsi, Y. Guidelines for Synthesis and Processing of Two-Dimensional Titanium Carbide (Ti₃C₂Tₓ MXene). Chem. Mater. 2017, 29, 7633–7644.",
     "Gouveia, J. D.; Novell-Leruth, G.; Reis, P. M. L. S.; Viñes, F.; Illas, F.; Gomes, J. R. B. First-Principles Calculations on the Adsorption Behavior of Amino Acids on a Titanium Carbide MXene. ACS Appl. Bio Mater. 2020, 3, 5913–5921.",
     "Knowles, T. P. J.; Vendruscolo, M.; Dobson, C. M. The amyloid state and its association with protein misfolding diseases. Nat. Rev. Mol. Cell Biol. 2014, 15, 384–396.",
     "Stelzl, L. S.; Pietrek, L. M.; Holla, A.; Oroz, J.; Sikora, M.; Köfinger, J.; Schuler, B.; Zweckstetter, M.; Hummer, G. Global Structure of the Intrinsically Disordered Protein Tau Emerges from Its Local Structure. JACS Au 2022, 2, 673–686."
@@ -180,15 +245,15 @@ def build_official_manuscript():
         return p
 
     def body(t):
-        p = doc.add_paragraph(t)
+        p = doc.add_paragraph()
+        emit_math(p, t, size=Pt(10))
         p.paragraph_format.space_after = Pt(5)
         return p
 
     def eq(t):
         p = doc.add_paragraph()
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        r = p.add_run(t)
-        r.font.name = 'Arial'; r.font.size = Pt(9.5); r.font.italic = True
+        emit_math(p, t, size=Pt(10), italic=True)
         p.paragraph_format.space_before = Pt(3); p.paragraph_format.space_after = Pt(5)
         return p
 
@@ -202,8 +267,7 @@ def build_official_manuscript():
         p_cap.paragraph_format.space_before = Pt(2); p_cap.paragraph_format.space_after = Pt(8)
         r_num = p_cap.add_run(f"{num_label} ")
         r_num.font.bold = True; r_num.font.size = Pt(8.8)
-        r_txt = p_cap.add_run(cap)
-        r_txt.font.size = Pt(8.8)
+        emit_math(p_cap, cap, size=Pt(8.8))
         return p_cap
 
     p_title = doc.add_paragraph()
@@ -240,7 +304,7 @@ def build_official_manuscript():
     p_abs.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
     r_absh = p_abs.add_run("Abstract—")
     r_absh.font.bold = True; r_absh.font.size = Pt(9.5)
-    r_abst = p_abs.add_run(
+    emit_math(p_abs, (
         "Biomolecular condensates formed via liquid-liquid phase separation (LLPS) of the intrinsically disordered "
         "protein Tau are implicated in subcellular compartmentalization, yet dense condensates are prone to "
         "pathological cross-β amyloid transitions. Here we establish a coarse-grained statistical-thermodynamic "
@@ -258,8 +322,7 @@ def build_official_manuscript():
         "secondary-nucleation-driven aging. A converged global sensitivity analysis shows that the apparent cloud point depends "
         "near-additively and comparably on the bulk-LCST parameters (β, Tc) and the interfacial parameters (ΔG_ads, a_s), "
         "whereas fibrillation arrest is governed almost entirely by area density a_s and extraction rate k_ext."
-    )
-    r_abst.font.size = Pt(9.5)
+    ), size=Pt(9.5))
     p_abs.paragraph_format.space_after = Pt(14)
 
     # 1. Introduction
@@ -301,11 +364,11 @@ def build_official_manuscript():
         "Condensate aging kinetics under strictly dimensional master equations. (a) Fibril mass fraction M_drop(t). (b) Liquid monomer depletion φ_dense(t). (c) Interfacial monomer sequestration m_ads(t). (d) Fibrillation lag time τ_lag vs interfacial area density a_s across [0, 1.0×10⁻⁴] nm⁻¹ (with illustrative reference loading C_nano ∈ [0, 100] µg/mL).")
 
     h2("2.5 Global Sensitivity and Convergence Analysis")
-    body(f"Figure 5 presents the Saltelli Sobol global sensitivity analysis over the 8 parameter distributions detailed in Table 3, evaluated directly from data/sobol_indices_N1024.csv using SALib (N_base = 1024, N_eval = 10240, scrambled Sobol seed = 42, 95% bootstrap confidence intervals across 1000 resamples). For the apparent cloud point T_cloud^app (Fig. 5a), evaluated by executing the FH-VO cloud-point solver (monotone bracketing with Brent refinement, and smooth linear extrapolation when the root lies outside the 8.6-65 degC evaluation window) for every sample, the output variance is distributed across all six active parameters, with total-effect indices spanning only S_T = {st_I:.2f}-{st_beta:.2f}: the bulk-LCST calibration parameters thermal slope β (S_T = {st_beta:.2f} ± {st_conf_beta:.2f}) and critical temperature Tc (S_T = {st_Tc:.2f} ± {st_conf_Tc:.2f}) lead, and the interfacial coordinates adsorption free energy ΔG_ads (S_T = {st_dG:.2f} ± {st_conf_dG:.2f}) and area density a_s (S_T = {st_as_tc:.2f} ± {st_conf_as_tc:.2f}) contribute comparably, followed by effective chain length N_eff (S_T = {st_N:.2f} ± {st_conf_N:.2f}) and ionic strength I (S_T = {st_I:.2f} ± {st_conf_I:.2f}). First-order and total-effect indices are close for every parameter (Σ S_i ≈ 0.87 versus Σ S_T ≈ 1.12), so T_cloud^app responds to its inputs in a near-additive manner with only mild pairwise interaction. Crucially, the structurally inactive parameters η_eff (S_1 = 0.000 ± 0.000, S_T = 0.000 ± 0.000) and k_ext (S_1 = 0.000 ± 0.000, S_T = 0.000 ± 0.000) evaluate to exact mathematical zeros, confirming the absence of estimator bias. For fibrillation mass M_final (Fig. 5b), interfacial area density a_s (first-order S_i = {s1_as_m:.2f} ± {s1_conf_as_m:.2f}, total-effect S_T = {st_as_m:.2f} ± {st_conf_as_m:.2f}) and extraction rate k_ext (S_T = {st_kext_m:.2f} ± {st_conf_kext_m:.2f}) exert primary control, while pure thermodynamic parameters do not participate directly in the isolated droplet aging equations (S_1 = 0.000, S_T = 0.000). We extended the same 8-parameter Sobol design to a third output, the physiological (37 °C) wetting angle θ_c (Fig. 5c), evaluated directly from the bulk binodal and the Langmuir surface grand potential at every sample. Adsorption free energy ΔG_ads dominates (S_T = {st_dG_th:.2f} ± {st_conf_dG_th:.2f}), followed by the phenomenological coupling factor η_eff (S_T = {st_eta_th:.2f} ± {st_conf_eta_th:.2f}, which enters θ_c linearly through Δγ_s but has no effect on T_cloud^app or M_final) and thermal slope β (S_T = {st_beta_th:.2f} ± {st_conf_beta_th:.2f}); critical temperature, segment length and ionic strength contribute only weakly (S_T < 0.04). As with the aging kinetics, area density a_s and extraction rate k_ext evaluate to exact structural zeros for θ_c, since Young's equation is evaluated on the bulk (adsorption-independent) coexistence compositions rather than the adsorption-depleted state. The model thus produces three output-specific sensitivity partitions: bulk macromolecular thermodynamics and interfacial adsorption jointly set phase coexistence, adsorption free energy and the interfacial coupling factor together control wetting, and nanosheet area density and extraction kinetics alone govern fibrillation arrest. Note that the phenomenological gradient correlation length b is treated as an effective fixed geometric scale anchored to experimental Rh and is not part of the 8-parameter Sobol variance decomposition. The block analysis (Figs. 5d-f) shows a converged decomposition for all three outputs: between N_base = 256 and N_base = 1024 every total-effect index changes by less than 0.02 and every bootstrap confidence interval narrows monotonically, so the N_base = 1024 estimate is retained for quantitative interpretation.")
+    body(f"Figure 5 presents the Saltelli Sobol global sensitivity analysis over the 8 parameter distributions detailed in Table 3, using SALib (N_base = 1024, N_eval = 10240, scrambled Sobol seed = 42, 95% bootstrap confidence intervals across 1000 resamples). For the apparent cloud point T_cloud^app (Fig. 5a), evaluated by executing the FH-VO cloud-point solver (monotone bracketing with Brent refinement, and smooth linear extrapolation when the root lies outside the 8.6-65 degC evaluation window) for every sample, the output variance is distributed across all six active parameters, with total-effect indices spanning only S_T = {st_I:.2f}-{st_beta:.2f}: the bulk-LCST calibration parameters thermal slope β (S_T = {st_beta:.2f} ± {st_conf_beta:.2f}) and critical temperature Tc (S_T = {st_Tc:.2f} ± {st_conf_Tc:.2f}) lead, and the interfacial coordinates adsorption free energy ΔG_ads (S_T = {st_dG:.2f} ± {st_conf_dG:.2f}) and area density a_s (S_T = {st_as_tc:.2f} ± {st_conf_as_tc:.2f}) contribute comparably, followed by effective chain length N_eff (S_T = {st_N:.2f} ± {st_conf_N:.2f}) and ionic strength I (S_T = {st_I:.2f} ± {st_conf_I:.2f}). First-order and total-effect indices are close for every parameter (Σ S_i ≈ 0.87 versus Σ S_T ≈ 1.12), so T_cloud^app responds to its inputs in a near-additive manner with only mild pairwise interaction. Crucially, the structurally inactive parameters η_eff (S_1 = 0.000 ± 0.000, S_T = 0.000 ± 0.000) and k_ext (S_1 = 0.000 ± 0.000, S_T = 0.000 ± 0.000) evaluate to exact mathematical zeros, confirming the absence of estimator bias. For fibrillation mass M_final (Fig. 5b), interfacial area density a_s (first-order S_i = {s1_as_m:.2f} ± {s1_conf_as_m:.2f}, total-effect S_T = {st_as_m:.2f} ± {st_conf_as_m:.2f}) and extraction rate k_ext (S_T = {st_kext_m:.2f} ± {st_conf_kext_m:.2f}) exert primary control, while pure thermodynamic parameters do not participate directly in the isolated droplet aging equations (S_1 = 0.000, S_T = 0.000). We extended the same 8-parameter Sobol design to a third output, the physiological (37 °C) wetting angle θ_c (Fig. 5c), evaluated directly from the bulk binodal and the Langmuir surface grand potential at every sample. Adsorption free energy ΔG_ads dominates (S_T = {st_dG_th:.2f} ± {st_conf_dG_th:.2f}), followed by the phenomenological coupling factor η_eff (S_T = {st_eta_th:.2f} ± {st_conf_eta_th:.2f}, which enters θ_c linearly through Δγ_s but has no effect on T_cloud^app or M_final) and thermal slope β (S_T = {st_beta_th:.2f} ± {st_conf_beta_th:.2f}); critical temperature, segment length and ionic strength contribute only weakly (S_T < 0.04). As with the aging kinetics, area density a_s and extraction rate k_ext evaluate to exact structural zeros for θ_c, since Young's equation is evaluated on the bulk (adsorption-independent) coexistence compositions rather than the adsorption-depleted state. The model thus produces three output-specific sensitivity partitions: bulk macromolecular thermodynamics and interfacial adsorption jointly set phase coexistence, adsorption free energy and the interfacial coupling factor together control wetting, and nanosheet area density and extraction kinetics alone govern fibrillation arrest. Note that the phenomenological gradient correlation length b is treated as an effective fixed geometric scale anchored to experimental Rh and is not part of the 8-parameter Sobol variance decomposition. The block analysis (Figs. 5d-f) shows a converged decomposition for all three outputs: between N_base = 256 and N_base = 1024 every total-effect index changes by less than 0.02 and every bootstrap confidence interval narrows monotonically, so the N_base = 1024 estimate is retained for quantitative interpretation.")
 
     fig("figures/Figure_5_Sobol_Sensitivity_Analysis.png",
         "Figure 5.",
-        "Sobol global sensitivity and block convergence analysis dynamically read from data/sobol_indices_N1024.csv and data/sobol_convergence_N1024.csv. First-order (S_i) and total-effect (S_Ti) indices with 95% bootstrap confidence intervals for (a) apparent cloud point T_cloud^app (evaluated directly with the FH-VO cloud-point solver), (b) fibrillation arrest M_final (evaluated directly via kinetic ODEs), and (c) physiological wetting angle θ_c at 37 °C (evaluated directly from the bulk binodal and the Langmuir surface grand potential). (d-f) Block sensitivity trajectories S_Ti(N) across dyadic sub-block sample sizes N ∈ {128, 256, 512, 1024} for the same three outputs; total-effect indices vary by less than 0.02 beyond N = 256 and every bootstrap confidence interval narrows monotonically toward the final N_base = 1024 estimate.")
+        "Sobol global sensitivity and block convergence analysis. First-order (S_i) and total-effect (S_Ti) indices with 95% bootstrap confidence intervals for (a) apparent cloud point T_cloud^app (evaluated directly with the FH-VO cloud-point solver), (b) fibrillation arrest M_final (evaluated directly via kinetic ODEs), and (c) physiological wetting angle θ_c at 37 °C (evaluated directly from the bulk binodal and the Langmuir surface grand potential). (d-f) Block sensitivity trajectories S_Ti(N) across dyadic sub-block sample sizes N ∈ {128, 256, 512, 1024} for the same three outputs; total-effect indices vary by less than 0.02 beyond N = 256 and every bootstrap confidence interval narrows monotonically toward the final N_base = 1024 estimate.")
 
     h2("2.6 Comparison with Recent Literature and Model Limitations")
     body("Our model predictions are qualitatively consistent with recent biophysical findings on condensate interfaces [25-27]. Specifically, Sporbeck et al. (PRX Life 2026) demonstrated that electrostatic charge and membrane modifications dictate Tau condensate wetting and spreading transitions [27]. Furthermore, Favetta et al. (Langmuir 2025) and Visser et al. (Nat. Commun. 2025) showed that interfacial adsorption and surfactant-like surface behavior can arrest heterogeneous nucleation at condensate boundaries [25,26].")
@@ -349,17 +412,13 @@ def build_official_manuscript():
     for r_idx, row in enumerate(t1_data):
         for c_idx, val in enumerate(row):
             cell = t1.cell(r_idx, c_idx)
-            cell.text = val
             p = cell.paragraphs[0]
             p.paragraph_format.space_after = Pt(2); p.paragraph_format.space_before = Pt(2)
-            r = p.runs[0]
-            r.font.name = 'Arial'; r.font.size = Pt(8.5)
+            emit_math(p, val, size=Pt(8.5), bold=(r_idx == 0))
             if r_idx == 0:
-                r.font.bold = True
                 set_cell_background(cell, "E2E8F0")
-            else:
-                if r_idx % 2 == 1:
-                    set_cell_background(cell, "F8FAFC")
+            elif r_idx % 2 == 1:
+                set_cell_background(cell, "F8FAFC")
             set_cell_margins(cell, 80, 80, 100, 100)
 
     p_sp = doc.add_paragraph(); p_sp.paragraph_format.space_after = Pt(6)
@@ -388,17 +447,13 @@ def build_official_manuscript():
     for r_idx, row in enumerate(t2_data):
         for c_idx, val in enumerate(row):
             cell = t2.cell(r_idx, c_idx)
-            cell.text = val
             p = cell.paragraphs[0]
             p.paragraph_format.space_after = Pt(2); p.paragraph_format.space_before = Pt(2)
-            r = p.runs[0]
-            r.font.name = 'Arial'; r.font.size = Pt(8.5)
+            emit_math(p, val, size=Pt(8.5), bold=(r_idx == 0))
             if r_idx == 0:
-                r.font.bold = True
                 set_cell_background(cell, "E2E8F0")
-            else:
-                if r_idx % 2 == 1:
-                    set_cell_background(cell, "F8FAFC")
+            elif r_idx % 2 == 1:
+                set_cell_background(cell, "F8FAFC")
             set_cell_margins(cell, 80, 80, 100, 100)
 
     p_sp2 = doc.add_paragraph(); p_sp2.paragraph_format.space_after = Pt(6)
@@ -457,17 +512,13 @@ def build_official_manuscript():
     for r_idx, row in enumerate(t3_data):
         for c_idx, val in enumerate(row):
             cell = t3.cell(r_idx, c_idx)
-            cell.text = val
             p = cell.paragraphs[0]
             p.paragraph_format.space_after = Pt(2); p.paragraph_format.space_before = Pt(2)
-            r = p.runs[0]
-            r.font.name = 'Arial'; r.font.size = Pt(8.5)
+            emit_math(p, val, size=Pt(8.5), bold=(r_idx == 0))
             if r_idx == 0:
-                r.font.bold = True
                 set_cell_background(cell, "E2E8F0")
-            else:
-                if r_idx % 2 == 1:
-                    set_cell_background(cell, "F8FAFC")
+            elif r_idx % 2 == 1:
+                set_cell_background(cell, "F8FAFC")
             set_cell_margins(cell, 80, 80, 100, 100)
 
     p_sp3 = doc.add_paragraph(); p_sp3.paragraph_format.space_after = Pt(6)
