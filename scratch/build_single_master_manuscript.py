@@ -367,7 +367,7 @@ def build_official_manuscript():
         ["Parameter", "Symbol", "Stabilized Borophene", "Ti3C2Tx MXene", "Methodological Provenance & Source"],
         ["Adsorption Free Energy", "ΔG_ads", "-7.8 kcal/mol", "-5.2 kcal/mol", "Model representative scenario [12,29]"],
         ["Saturation Density", "Γ_max", "0.38 nm⁻²", "0.26 nm⁻²", "Geometric model estimate (1 / A_footprint)"],
-        ["Surface Excess Energy (37°C)", "Δγ_s", "1.023 µN/m", "0.296 µN/m", "Derived from Langmuir grand potential: Eq. 4"],
+        ["Surface Excess Energy (37°C)", "Δγ_s", "1.023 µN/m", "0.296 µN/m", "Derived from the Langmuir surface grand potential, Section 3.4"],
         ["Contact Angle (37°C)", "θ_c", "50.3°", "79.3°", "Young's equation closure: cos(θ_c) = Δγ_s / γ_LL"],
         ["Extraction Rate Constant", "k_ext", "1.25 h⁻¹", "0.75 h⁻¹", "Phenomenological kinetic parameter (diffusion limit)"],
         ["Desorption Rate Constant", "k_des", "0.04 h⁻¹", "0.12 h⁻¹", "Phenomenological kinetic parameter"]
