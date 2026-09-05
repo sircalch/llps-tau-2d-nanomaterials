@@ -35,7 +35,7 @@ The central soft-matter insight of our study is that **2D interface-mediated LLP
 - **Scope Fit:** This manuscript fits squarely within the scope of *Soft Matter*, bridging polymer theory, complex coacervation, interfacial wetting, and soft nanotechnology.
 - **Conflicts of Interest:** The authors declare that there are no conflicts of interest.
 - **Open Data & Reproducibility:** All simulation codes, root solvers, kinetic master equation integrators, digitized data, and automated test suites are openly accessible in the project repository: https://github.com/sircalch/llps-tau-2d-nanomaterials. The exact version is permanently archived on Zenodo (DOI: 10.5281/zenodo.22268507, release v1.0.1).
-- **Generative AI Disclosure:** In strict accordance with RSC author guidelines, generative AI tools (OpenAI Codex / Anthropic Claude / Google Gemini) were utilized during computational development for code review, unit test generation, and manuscript formatting. All mathematical models, numerical simulations, physical interpretations, and citations were independently formulated, verified, and approved by the authors.
+- **Generative AI Disclosure:** In accordance with RSC author guidelines, generative AI tools (large language models) were used to assist with code development, testing, and language editing. All models, analyses, results, figures, and citations were designed, verified, and approved by the authors, who take full responsibility for the content.
 
 ### Suggested Independent Referees:
 1. **Prof. Rohit V. Pappu** (Washington University in St. Louis) - Expert in intrinsically disordered proteins, polymer physics of biomolecular condensates, and phase behavior. Email: pappu@wustl.edu
@@ -99,7 +99,7 @@ Email: andres.monreal@ues.mx
     add_p("• Scope Fit: Directly aligns with the scope of Soft Matter, bridging biopolymers, liquid-liquid phase coexistence, wetting transitions, and soft nanotechnology.")
     add_p("• Conflicts of Interest: The authors declare that there are no conflicts of interest.")
     add_p("• Open Data & Code: Fully open in GitHub (https://github.com/sircalch/llps-tau-2d-nanomaterials) with continuous integration. The exact version is permanently archived on Zenodo (DOI: 10.5281/zenodo.22268507).")
-    add_p("• Generative AI Disclosure: In accordance with RSC policy, generative AI tools (OpenAI Codex / Anthropic Claude / Google Gemini) were utilized for code review, unit test generation, and manuscript formatting. All models, calculations, and interpretations were independently formulated and verified by the authors.")
+    add_p("• Generative AI Disclosure: In accordance with RSC policy, generative AI tools (large language models) were used to assist with code development, testing, and language editing. All models, analyses, results and interpretations were designed, verified and approved by the authors.")
 
     add_p("Suggested Independent Referees:", bold=True, space_after=4)
     add_p("1. Prof. Rohit V. Pappu (Washington University in St. Louis) - pappu@wustl.edu\n2. Prof. Tuomas P. J. Knowles (University of Cambridge) - tpjk2@cam.ac.uk\n3. Prof. Yury Gogotsi (Drexel University) - gogotsi@drexel.edu\n4. Dr. Roland L. Knorr (Max Planck Institute of Colloids and Interfaces) - roland.knorr@mpikg.mpg.de")

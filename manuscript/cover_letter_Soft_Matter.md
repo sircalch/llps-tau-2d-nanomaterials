@@ -30,7 +30,7 @@ The central soft-matter insight of our study is that **2D interface-mediated LLP
 - **Scope Fit:** This manuscript fits squarely within the scope of *Soft Matter*, bridging polymer theory, complex coacervation, interfacial wetting, and soft nanotechnology.
 - **Conflicts of Interest:** The authors declare that there are no conflicts of interest.
 - **Open Data & Reproducibility:** All simulation codes, root solvers, kinetic master equation integrators, digitized data, and automated test suites are openly accessible in the project repository: https://github.com/sircalch/llps-tau-2d-nanomaterials. The exact version is permanently archived on Zenodo (DOI: 10.5281/zenodo.22268507, release v1.0.1).
-- **Generative AI Disclosure:** In strict accordance with RSC author guidelines, generative AI tools (OpenAI Codex / Anthropic Claude / Google Gemini) were utilized during computational development for code review, unit test generation, and manuscript formatting. All mathematical models, numerical simulations, physical interpretations, and citations were independently formulated, verified, and approved by the authors.
+- **Generative AI Disclosure:** In accordance with RSC author guidelines, generative AI tools (large language models) were used to assist with code development, testing, and language editing. All models, analyses, results, figures, and citations were designed, verified, and approved by the authors, who take full responsibility for the content.
 
 ### Suggested Independent Referees:
 1. **Prof. Rohit V. Pappu** (Washington University in St. Louis) - Expert in intrinsically disordered proteins, polymer physics of biomolecular condensates, and phase behavior. Email: pappu@wustl.edu

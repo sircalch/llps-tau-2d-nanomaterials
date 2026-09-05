@@ -84,7 +84,7 @@ High-resolution 600 dpi TIFFs of every figure are produced by `run_pipeline.py`
 - **Data availability:** code and data openly on GitHub (https://github.com/sircalch/llps-tau-2d-nanomaterials, MIT) and permanently archived on Zenodo, DOI **10.5281/zenodo.22268507** (release v1.0.1).
 - **Author contributions:** CRediT, see §5 above.
 - **Acknowledgements / funding:** "This work received no external or third-party funding"; institutional/infrastructural support from Universidad Estatal de Sonora (UES) and Universidad de Sonora (UNISON). No grant number to declare in the portal's Funder field.
-- **Generative-AI declaration:** in the Acknowledgements — AI assistance used for code review, unit-test generation and manuscript formatting, all content verified under author responsibility; **all figures and the graphical abstract are deterministic matplotlib output with no AI-generated imagery.**
+- **Generative-AI declaration:** in the Acknowledgements — "Generative AI tools (large language models) were used to assist with code development, testing, and language editing; no figure, including the graphical abstract, contains AI-generated imagery. All models, analyses, results, and citations were designed, verified, and approved by the authors, who take full responsibility for the content."
 
 ## 10. Portal confirmation checkboxes (typical RSC ScholarOne)
 
