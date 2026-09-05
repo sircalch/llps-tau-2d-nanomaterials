@@ -75,6 +75,9 @@ cd llps-tau-2d-nanomaterials
 pip install -r requirements.txt
 ```
 
+For bit-for-bit reproduction of the exact figures and Sobol GSA archived at the
+Zenodo DOI below, install the pinned versions instead: `pip install -r requirements-lock.txt`.
+
 ### 2. Run the Full Pipeline
 
 Execute the master reproduction pipeline. It runs the unit test suite, regenerates all

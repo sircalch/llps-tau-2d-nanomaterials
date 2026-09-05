@@ -1,0 +1,16 @@
+# Exact dependency versions used to produce the results, figures, and Sobol
+# GSA (data/sobol_*_N1024.*) reported in the manuscript and archived at
+# https://doi.org/10.5281/zenodo.22268507 (release v1.0.1).
+#
+# requirements.txt intentionally stays version-floor-only (`>=`) so CI keeps
+# testing against current releases across Python 3.10-3.12 and catches
+# upstream breakage early. Install this file instead for bit-for-bit
+# reproduction of the archived numbers:
+#   pip install -r requirements-lock.txt
+numpy==2.5.2
+scipy==1.18.1
+matplotlib==3.11.1
+pandas==3.0.5
+SALib==1.5.2
+python-docx==1.2.0
+pytest==9.1.1
