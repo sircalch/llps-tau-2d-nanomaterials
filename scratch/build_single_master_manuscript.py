@@ -489,7 +489,7 @@ def build_official_manuscript():
     body("All simulation scripts, thermodynamic root solvers, kinetic master equation integrators, digitized experimental literature data, and unit test suites are openly available in the project GitHub repository (https://github.com/sircalch/llps-tau-2d-nanomaterials) under the MIT License and supported by automated continuous integration. The exact version reported here is permanently archived on Zenodo: https://doi.org/10.5281/zenodo.22268507 (release v1.0.1). Running python run_pipeline.py regenerates the full unit-test suite, every figure, this manuscript, and the cover letter from source.")
 
     h1("Acknowledgements")
-    body("This work received no external or third-party funding; the authors acknowledge institutional and infrastructural support from Universidad Estatal de Sonora (UES) and Universidad de Sonora (UNISON). Generative AI tools (large language models) were used to assist with code development, testing, and language editing; no figure, including the graphical abstract, contains AI-generated imagery. All models, analyses, results, and citations were designed, verified, and approved by the authors, who take full responsibility for the content.")
+    body("This research received no specific grant from any funding agency in the public, commercial, or not-for-profit sectors, and no institutional support. Generative AI tools (large language models) were used to assist with code development, testing, and language editing; no figure, including the graphical abstract, contains AI-generated imagery. All models, analyses, results, and citations were designed, verified, and approved by the authors, who take full responsibility for the content.")
 
     # References
     h1("References")

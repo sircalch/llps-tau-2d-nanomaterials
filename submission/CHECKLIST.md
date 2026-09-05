@@ -16,7 +16,7 @@
 | Conflicts of interest statement | ✔ in manuscript ("none") |
 | Data availability statement (after conflicts) | ✔ in manuscript, Zenodo DOI 10.5281/zenodo.22268507 |
 | Author contributions (CRediT) | ✔ in manuscript |
-| Acknowledgements + funding | ✔ (institutional) |
+| Acknowledgements + funding | ✔ (no funding, no institutional support) |
 | Generative-AI declaration (incl. figures not AI-generated) | ✔ in Acknowledgements |
 | References numbered and complete (RSC typesets house style on acceptance) | ✔ 31 refs, numeric |
 | Ethics statements | N/A — purely computational, no human/animal data |
@@ -25,7 +25,7 @@
 
 - [x] ~~ORCID for the corresponding author~~ — 0009-0009-1207-8597 (Andrés Monreal Hernández), now in PORTAL_FIELDS.md / CITATION.cff / .zenodo.json. Co-authors' ORCID still optional/unfilled.
 - [x] ~~Suggested reviewers: institutional emails~~ — filled in `PORTAL_FIELDS.md` §7 (from the cover letter); just double-check none has a conflict of interest with the authors
-- [x] ~~Funding~~ — none; manuscript now states "This work received no external or third-party funding"
+- [x] ~~Funding~~ — none; manuscript states "no specific grant ... and no institutional support"
 - [x] ~~Open-access choice~~ — **standard Licence to Publish** (free, no APC). Does not affect acceptance odds or journal/quartile. Code/data already open via Zenodo regardless.
 - [ ] Confirm all four co-authors have seen and approved this version
 
