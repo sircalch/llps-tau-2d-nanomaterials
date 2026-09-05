@@ -247,7 +247,7 @@ def generate_figure_3():
 
     ax.set_xlabel(r"Nanosheet Loading, $C_{nano}\ (\mu\mathrm{g/mL})$", fontsize=10.0, fontweight='bold')
     ax.set_ylabel(r"Apparent Cloud Point, $T_{cloud}^{app}\ (^\circ\mathrm{C})$", fontsize=10.0, fontweight='bold')
-    ax.set_title(r"(a) True Apparent Cloud-Point Shift ($T_{cloud}^{app}$)" + "\n" + r"(Thermodynamically Solved via Brent's Root Finding)", fontsize=10.0, fontweight='bold')
+    ax.set_title(r"(a) Apparent Cloud-Point Shift ($T_{cloud}^{app}$)" + "\n" + r"(binodal-crossing condition solved by Brent's method)", fontsize=10.0, fontweight='bold')
     ax.set_xlim(0, 100); ax.set_ylim(14, 42); ax.grid(True, ls=':', alpha=0.45)
     ax.legend(frameon=True, facecolor='white', edgecolor='#CBD5E1', fontsize=8.0, loc='lower right')
 
@@ -257,7 +257,7 @@ def generate_figure_3():
     theta_boro = [wetting.compute_contact_angle(T_C + 273.15, material="borophene")[0] for T_C in T_sweep]
     theta_mxen = [wetting.compute_contact_angle(T_C + 273.15, material="mxene")[0] for T_C in T_sweep]
 
-    # Monte Carlo 95% CI (N_MC = 500 draws on dG_ads +/- 0.5 kcal/mol, eta_eff +/- 0.02e-3)
+    # Monte Carlo 95% CI (N_MC = 500 draws; Gaussian dG_ads sd 0.25 kcal/mol, eta_eff sd 0.02e-3)
     np.random.seed(42)
     N_MC = 500
     dG_b_mc = np.random.normal(-7.8, 0.25, N_MC)
