@@ -61,7 +61,7 @@ TAU_K18_SYSTEM = {
     "hydrodynamic_radius_nm": 3.4,        # Experimental Rh from SAXS/DLS (Stelzl et al., JACS Au 2022, 2:673)
     "swollen_coil_volume_nm3": 164.6,     # 4/3 * pi * Rh³
     "c_star_molar_mM": 10.1,              # Molar overlap concentration: 3 / (4 pi N_A Rh³)
-    "c_star_mass_g_L": 141.0,             # Mass overlap concentration: 3 MW / (4 pi N_A Rh³)
+    "c_star_mass_g_L": 141.2,             # Mass overlap concentration: 3 MW / (4 pi N_A Rh³)
     "s_phi_per_uM": 9.50e-4,              # Calibrated order-parameter scale factor: 0.950 mM^-1
     "s_phi": 9.50e-4,                     # Alias
     "reference_c_uM": 100.0,              # Nominal experimental concentration (100 uM -> phi_tilde = 0.095)

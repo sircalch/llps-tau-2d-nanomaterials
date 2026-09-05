@@ -1,12 +1,13 @@
 """
 generate_master_figures.py
 ===========================
-Canonical generator for all 5 Master Publication Figures (300 DPI) for Soft Matter / Langmuir:
-  - Figure 1: Bulk Tau K18 LCST Phase Diagram (with Ambadipudi Fig. 2b CSV digitized data) & Adsorption Depletion
-  - Figure 2: Salt Screening & Cahn-Hilliard Wetting Phase Diagram (Dynamic Coordinate Binding)
-  - Figure 3: Borophene vs MXene Comparison (True Thermodynamic Root T_cloud^app, theta(T) with MC 95% CI, tau_lag, M_final)
-  - Figure 4: Condensate Aging Kinetics with Strict Mass Conservation & Dimensional Fluxes
-  - Figure 5: Sobol Global Sensitivity Analysis (Direct Physical Root Solvers across all Thermodynamic and Kinetic Parameters)
+Canonical generator for all 5 master publication figures (300 dpi PNG + vector PDF + 600 dpi TIFF)
+for the Soft Matter manuscript:
+  - Figure 1: Bulk Tau K18 LCST phase diagram (with the digitized Ambadipudi Fig. 2b data) and adsorption depletion
+  - Figure 2: Salt screening and Cahn-Hilliard wetting phase map
+  - Figure 3: Borophene vs MXene comparison (T_cloud^app, theta_c(T) with MC 95% CI, tau_lag, M_final)
+  - Figure 4: Condensate aging kinetics with strict mass conservation and dimensional fluxes
+  - Figure 5: Saltelli-Jansen Sobol GSA of three outputs (T_cloud^app, M_final, theta_c) and block convergence
 """
 
 import os, sys, io
@@ -458,7 +459,7 @@ def generate_figure_5():
     ax.bar(x + w/2, ST_Tc, w, yerr=ST_conf_Tc, capsize=3, error_kw={'elinewidth': 1.0, 'ecolor': '#1E3A8A'}, label=r"Total-Effect $S_{Ti}$", color='#93C5FD', ec='#2563EB')
     ax.set_xticks(x); ax.set_xticklabels(PARAM_DESCRIP, rotation=35, ha='right', fontsize=8.5)
     ax.set_ylabel("Sobol Index", fontsize=10.0, fontweight='bold')
-    ax.set_title(r"(a) Sobol Indices: Apparent Cloud Point $T_{cloud}^{app}$" + "\n" + rf"($N_{{base}}={N_base}$, $D={D}$, $N_{{eval}}={N_eval}$, Saltelli et al. / SALib, 95% CI)", fontsize=9.8, fontweight='bold')
+    ax.set_title(r"(a) Sobol Indices: Apparent Cloud Point $T_{cloud}^{app}$" + "\n" + rf"($N_{{base}}={N_base}$, $D={D}$, $N_{{eval}}={N_eval}$, Saltelli-Jansen / SALib, 95% CI)", fontsize=9.8, fontweight='bold')
     ax.set_ylim(-0.05, 0.40); ax.grid(True, ls=':', alpha=0.45, axis='y'); ax.legend(fontsize=8.2)
 
     ax = axes[0, 1]
@@ -466,7 +467,7 @@ def generate_figure_5():
     ax.bar(x + w/2, ST_M, w, yerr=ST_conf_M, capsize=3, error_kw={'elinewidth': 1.0, 'ecolor': '#064E3B'}, label=r"Total-Effect $S_{Ti}$", color='#A7F3D0', ec='#059669')
     ax.set_xticks(x); ax.set_xticklabels(PARAM_DESCRIP, rotation=35, ha='right', fontsize=8.5)
     ax.set_ylabel("Sobol Index", fontsize=10.0, fontweight='bold')
-    ax.set_title(r"(b) Sobol Indices: Fibrillation Mass $M_{final}$" + "\n" + rf"($N_{{base}}={N_base}$, Saltelli et al. / SALib, 95% CI)", fontsize=9.8, fontweight='bold')
+    ax.set_title(r"(b) Sobol Indices: Fibrillation Mass $M_{final}$" + "\n" + rf"($N_{{base}}={N_base}$, Saltelli-Jansen / SALib, 95% CI)", fontsize=9.8, fontweight='bold')
     ax.set_ylim(0, 1.10); ax.grid(True, ls=':', alpha=0.45, axis='y'); ax.legend(fontsize=8.2)
 
     ax = axes[0, 2]
@@ -474,7 +475,7 @@ def generate_figure_5():
     ax.bar(x + w/2, ST_th, w, yerr=ST_conf_th, capsize=3, error_kw={'elinewidth': 1.0, 'ecolor': '#7C2D12'}, label=r"Total-Effect $S_{Ti}$", color='#FDBA74', ec='#EA580C')
     ax.set_xticks(x); ax.set_xticklabels(PARAM_DESCRIP, rotation=35, ha='right', fontsize=8.5)
     ax.set_ylabel("Sobol Index", fontsize=10.0, fontweight='bold')
-    ax.set_title(r"(c) Sobol Indices: Wetting Angle $\theta_c$ (37 °C)" + "\n" + rf"($N_{{base}}={N_base}$, Saltelli et al. / SALib, 95% CI)", fontsize=9.8, fontweight='bold')
+    ax.set_title(r"(c) Sobol Indices: Wetting Angle $\theta_c$ (37 °C)" + "\n" + rf"($N_{{base}}={N_base}$, Saltelli-Jansen / SALib, 95% CI)", fontsize=9.8, fontweight='bold')
     ax.set_ylim(-0.05, max(0.40, float(np.nanmax(ST_th)) * 1.25)); ax.grid(True, ls=':', alpha=0.45, axis='y'); ax.legend(fontsize=8.2)
 
     colors_p = plt.cm.tab10(np.linspace(0, 0.9, D))

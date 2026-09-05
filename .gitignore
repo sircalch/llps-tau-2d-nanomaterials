@@ -73,3 +73,7 @@ submission/upload/
 
 # Unrelated stray project accidentally added once - never track
 dft_eads_screening/
+
+# Office lock/temp files
+.~lock.*#
+~$*
