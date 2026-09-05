@@ -1,8 +1,16 @@
 """
-Ad-hoc robustness check (not part of the pipeline): re-run the exact same
-N_base=1024 Sobol GSA with a different seed and compare the resulting
-indices against the canonical data/sobol_indices_N1024.csv, to confirm the
-reported conclusions are not an artifact of seed=42.
+Seed-robustness check for the canonical Sobol GSA (not part of run_pipeline.py;
+kept as a documented validation artifact, run on demand). Re-runs the exact same
+N_base=1024 design with seed=123 and compares against the archived seed=42
+results in data/sobol_indices_N1024.csv, to confirm the reported T_cloud/M_final
+conclusions are not an artifact of the declared seed.
+
+Result at the time this was last run (see git history for the full comparison
+table): identical parameter-importance ranking for T_cloud^app under both
+seeds, all total-effect indices agreeing within the already-reported bootstrap
+CIs (max difference 0.023). Predates the theta_c GSA output added later to
+run_salib_sobol.py; extend eval_single here the same way if re-checking theta_c
+seed-robustness is ever wanted.
 """
 import sys, os, time
 sys.path.insert(0, '.')

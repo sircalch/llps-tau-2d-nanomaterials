@@ -439,19 +439,18 @@ def generate_figure_5():
         print(f"Loading Sobol indices directly from {csv_indices}...")
         df_ind = pd.read_csv(csv_indices).set_index("parameter")
         param_order = ["N_eff", "beta", "Tc_K", "dG_ads", "a_s", "I_M", "eta_eff", "k_ext"]
-        S1_Tc      = df_ind.loc[param_order, "S1_Tcloud"].values
-        S1_conf_Tc = df_ind.loc[param_order, "S1_conf_Tcloud"].values
-        ST_Tc      = df_ind.loc[param_order, "ST_Tcloud"].values
-        ST_conf_Tc = df_ind.loc[param_order, "ST_conf_Tcloud"].values
 
-        S1_M       = df_ind.loc[param_order, "S1_M_final"].values
-        S1_conf_M  = df_ind.loc[param_order, "S1_conf_M_final"].values
-        ST_M       = df_ind.loc[param_order, "ST_M_final"].values
-        ST_conf_M  = df_ind.loc[param_order, "ST_conf_M_final"].values
+        def cols(suffix):
+            return (df_ind.loc[param_order, f"S1_{suffix}"].values, df_ind.loc[param_order, f"S1_conf_{suffix}"].values,
+                    df_ind.loc[param_order, f"ST_{suffix}"].values, df_ind.loc[param_order, f"ST_conf_{suffix}"].values)
+
+        S1_Tc, S1_conf_Tc, ST_Tc, ST_conf_Tc = cols("Tcloud")
+        S1_M, S1_conf_M, ST_M, ST_conf_M = cols("M_final")
+        S1_th, S1_conf_th, ST_th, ST_conf_th = cols("theta")
     else:
         raise FileNotFoundError(f"Sobol indices CSV not found at {csv_indices}. Run scratch/run_salib_sobol.py first.")
 
-    fig, axes = plt.subplots(2, 2, figsize=(13.5, 9.5), dpi=300)
+    fig, axes = plt.subplots(2, 3, figsize=(19.5, 9.5), dpi=300)
     x = np.arange(D); w = 0.32
 
     ax = axes[0, 0]
@@ -459,7 +458,7 @@ def generate_figure_5():
     ax.bar(x + w/2, ST_Tc, w, yerr=ST_conf_Tc, capsize=3, error_kw={'elinewidth': 1.0, 'ecolor': '#1E3A8A'}, label=r"Total-Effect $S_{Ti}$", color='#93C5FD', ec='#2563EB')
     ax.set_xticks(x); ax.set_xticklabels(PARAM_DESCRIP, rotation=35, ha='right', fontsize=8.5)
     ax.set_ylabel("Sobol Index", fontsize=10.0, fontweight='bold')
-    ax.set_title(r"(a) Sobol Indices: Apparent Cloud Point $T_{cloud}^{app}$" + "\n" + rf"($N_{{base}}={N_base}$, $D={D}$, $N_{{eval}}={N_eval}$, Saltelli et al. / SALib, 95% CI)", fontsize=10.5, fontweight='bold')
+    ax.set_title(r"(a) Sobol Indices: Apparent Cloud Point $T_{cloud}^{app}$" + "\n" + rf"($N_{{base}}={N_base}$, $D={D}$, $N_{{eval}}={N_eval}$, Saltelli et al. / SALib, 95% CI)", fontsize=9.8, fontweight='bold')
     ax.set_ylim(-0.05, 0.40); ax.grid(True, ls=':', alpha=0.45, axis='y'); ax.legend(fontsize=8.2)
 
     ax = axes[0, 1]
@@ -467,13 +466,20 @@ def generate_figure_5():
     ax.bar(x + w/2, ST_M, w, yerr=ST_conf_M, capsize=3, error_kw={'elinewidth': 1.0, 'ecolor': '#064E3B'}, label=r"Total-Effect $S_{Ti}$", color='#A7F3D0', ec='#059669')
     ax.set_xticks(x); ax.set_xticklabels(PARAM_DESCRIP, rotation=35, ha='right', fontsize=8.5)
     ax.set_ylabel("Sobol Index", fontsize=10.0, fontweight='bold')
-    ax.set_title(r"(b) Sobol Indices: Fibrillation Mass $M_{final}$" + "\n" + rf"($N_{{base}}={N_base}$, Saltelli et al. / SALib, 95% CI)", fontsize=10.5, fontweight='bold')
+    ax.set_title(r"(b) Sobol Indices: Fibrillation Mass $M_{final}$" + "\n" + rf"($N_{{base}}={N_base}$, Saltelli et al. / SALib, 95% CI)", fontsize=9.8, fontweight='bold')
     ax.set_ylim(0, 1.10); ax.grid(True, ls=':', alpha=0.45, axis='y'); ax.legend(fontsize=8.2)
 
-    N_steps = [128, 256, 512, 1024]  # Convergence sub-blocks
+    ax = axes[0, 2]
+    ax.bar(x - w/2, S1_th, w, yerr=S1_conf_th, capsize=3, error_kw={'elinewidth': 1.0, 'ecolor': '#7C2D12'}, label=r"First-Order $S_i$", color='#F97316', ec='#C2410C')
+    ax.bar(x + w/2, ST_th, w, yerr=ST_conf_th, capsize=3, error_kw={'elinewidth': 1.0, 'ecolor': '#7C2D12'}, label=r"Total-Effect $S_{Ti}$", color='#FDBA74', ec='#EA580C')
+    ax.set_xticks(x); ax.set_xticklabels(PARAM_DESCRIP, rotation=35, ha='right', fontsize=8.5)
+    ax.set_ylabel("Sobol Index", fontsize=10.0, fontweight='bold')
+    ax.set_title(r"(c) Sobol Indices: Wetting Angle $\theta_c$ (37 °C)" + "\n" + rf"($N_{{base}}={N_base}$, Saltelli et al. / SALib, 95% CI)", fontsize=9.8, fontweight='bold')
+    ax.set_ylim(-0.05, max(0.40, float(np.nanmax(ST_th)) * 1.25)); ax.grid(True, ls=':', alpha=0.45, axis='y'); ax.legend(fontsize=8.2)
+
     colors_p = plt.cm.tab10(np.linspace(0, 0.9, D))
 
-    ax_c1 = axes[1, 0]; ax_c2 = axes[1, 1]
+    ax_c1 = axes[1, 0]; ax_c2 = axes[1, 1]; ax_c3 = axes[1, 2]
 
     if os.path.exists(csv_conv):
         print(f"Loading Sobol convergence curves directly from {csv_conv}...")
@@ -483,18 +489,24 @@ def generate_figure_5():
             df_p = df_conv[df_conv['parameter'] == p_code].sort_values('N_base')
             ax_c1.errorbar(df_p['N_base'], df_p['ST_Tcloud'], yerr=df_p['ST_conf_Tcloud'], marker='o', ms=4, capsize=2.5, color=colors_p[j], lw=1.8, label=PARAM_NAMES[j])
             ax_c2.errorbar(df_p['N_base'], df_p['ST_M_final'], yerr=df_p['ST_conf_M_final'], marker='o', ms=4, capsize=2.5, color=colors_p[j], lw=1.8, label=PARAM_NAMES[j])
+            ax_c3.errorbar(df_p['N_base'], df_p['ST_theta'], yerr=df_p['ST_conf_theta'], marker='o', ms=4, capsize=2.5, color=colors_p[j], lw=1.8, label=PARAM_NAMES[j])
     else:
         raise FileNotFoundError(f"Convergence CSV not found at {csv_conv}. Run scratch/run_salib_sobol.py first.")
 
     ax_c1.set_xlabel(r"Base Sample Size, $N_{base}$", fontsize=10.0, fontweight='bold')
     ax_c1.set_ylabel(r"Total-Effect $S_{Ti}(N)$", fontsize=10.0, fontweight='bold')
-    ax_c1.set_title(r"(c) Block Sensitivity Trajectories: $T_{cloud}^{app}$ Indices", fontsize=10.5, fontweight='bold')
+    ax_c1.set_title(r"(d) Block Sensitivity Trajectories: $T_{cloud}^{app}$ Indices", fontsize=10.0, fontweight='bold')
     ax_c1.grid(True, ls=':', alpha=0.45); ax_c1.legend(fontsize=7.2, loc='upper right', ncol=2)
 
     ax_c2.set_xlabel(r"Base Sample Size, $N_{base}$", fontsize=10.0, fontweight='bold')
     ax_c2.set_ylabel(r"Total-Effect $S_{Ti}(N)$", fontsize=10.0, fontweight='bold')
-    ax_c2.set_title(r"(d) Block Sensitivity Trajectories: $M_{final}$ Indices", fontsize=10.5, fontweight='bold')
+    ax_c2.set_title(r"(e) Block Sensitivity Trajectories: $M_{final}$ Indices", fontsize=10.0, fontweight='bold')
     ax_c2.grid(True, ls=':', alpha=0.45); ax_c2.legend(fontsize=7.2, loc='upper right', ncol=2)
+
+    ax_c3.set_xlabel(r"Base Sample Size, $N_{base}$", fontsize=10.0, fontweight='bold')
+    ax_c3.set_ylabel(r"Total-Effect $S_{Ti}(N)$", fontsize=10.0, fontweight='bold')
+    ax_c3.set_title(r"(f) Block Sensitivity Trajectories: $\theta_c$ Indices", fontsize=10.0, fontweight='bold')
+    ax_c3.grid(True, ls=':', alpha=0.45); ax_c3.legend(fontsize=7.2, loc='upper right', ncol=2)
 
     plt.tight_layout()
     out_base = "figures/Figure_5_Sobol_Sensitivity_Analysis"

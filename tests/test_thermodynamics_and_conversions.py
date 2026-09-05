@@ -176,7 +176,8 @@ def test_sobol_indices_dataset_integrity():
     assert len(df_sobol) == 8, "Expected 8 parameters in Sobol index table"
     expected_cols = {
         "S1_Tcloud", "S1_conf_Tcloud", "ST_Tcloud", "ST_conf_Tcloud",
-        "S1_M_final", "S1_conf_M_final", "ST_M_final", "ST_conf_M_final"
+        "S1_M_final", "S1_conf_M_final", "ST_M_final", "ST_conf_M_final",
+        "S1_theta", "S1_conf_theta", "ST_theta", "ST_conf_theta",
     }
     assert expected_cols.issubset(df_sobol.columns)
 
@@ -192,19 +193,29 @@ def test_sobol_indices_dataset_integrity():
         assert abs(df_sobol.loc[p_thermo, "S1_M_final"]) < 1e-4
         assert abs(df_sobol.loc[p_thermo, "ST_M_final"]) < 1e-4
 
+    # theta_c (evaluated at fixed T=37 degC from the bulk binodal + wetting formula) does
+    # not depend on the adsorbed-loading coordinate a_s or the extraction kinetics k_ext
+    for p_inactive in ["a_s", "k_ext"]:
+        assert abs(df_sobol.loc[p_inactive, "S1_theta"]) < 1e-4
+        assert abs(df_sobol.loc[p_inactive, "ST_theta"]) < 1e-4
+
     # 2. S1 <= ST property for all active parameters
     for p in df_sobol.index:
         # Allow small negative lower fluctuations within confidence interval for finite samples
         assert df_sobol.loc[p, "ST_Tcloud"] >= 0.0
         assert df_sobol.loc[p, "ST_M_final"] >= 0.0
+        assert df_sobol.loc[p, "ST_theta"] >= 0.0
         if df_sobol.loc[p, "ST_Tcloud"] > 0.05:
             assert df_sobol.loc[p, "S1_Tcloud"] <= df_sobol.loc[p, "ST_Tcloud"] + 1e-4
         if df_sobol.loc[p, "ST_M_final"] > 0.05:
             assert df_sobol.loc[p, "S1_M_final"] <= df_sobol.loc[p, "ST_M_final"] + 1e-4
+        if df_sobol.loc[p, "ST_theta"] > 0.05:
+            assert df_sobol.loc[p, "S1_theta"] <= df_sobol.loc[p, "ST_theta"] + 1e-4
 
     # 3. Active parameters dominate
     assert df_sobol.loc["a_s", "ST_M_final"] > 0.80
     assert df_sobol.loc["k_ext", "ST_M_final"] > 0.05
+    assert df_sobol.loc["dG_ads", "ST_theta"] > 0.10
 
     # 4. Verify convergence table
     conv_path = os.path.join(os.path.dirname(__file__), "../data/sobol_convergence_N1024.csv")
@@ -243,19 +254,22 @@ def test_sobol_prefix_consistency_and_shapes():
     eval_path = os.path.join(os.path.dirname(__file__), "../data/sobol_evaluations_N1024.npz")
     assert os.path.exists(eval_path), f"Sobol evaluations archive not found at {eval_path}"
     raw = np.load(eval_path)
-    Y_Tc, Y_M = raw['Y_Tc'], raw['Y_M']
+    Y_Tc, Y_M, Y_theta = raw['Y_Tc'], raw['Y_M'], raw['Y_theta']
 
     D = 8
     step = D + 2  # 10
     N_BASE = 1024
     assert len(Y_Tc) == N_BASE * step
     assert len(Y_M) == N_BASE * step
+    assert len(Y_theta) == N_BASE * step
+    assert np.all((Y_theta >= 0.0) & (Y_theta <= 180.0)), "theta_c must be a physical angle in [0, 180] degrees"
 
     # Verify sub-block shapes
     for n in [128, 256, 512, 1024]:
         expected_rows = n * step
         assert len(Y_Tc[:expected_rows]) == expected_rows
         assert len(Y_M[:expected_rows]) == expected_rows
+        assert len(Y_theta[:expected_rows]) == expected_rows
 
     # Verify that the top convergence sub-block (N = N_base) reproduces the main indices
     csv_main = pd.read_csv(os.path.join(os.path.dirname(__file__), "../data/sobol_indices_N1024.csv")).set_index("parameter")
@@ -267,6 +281,8 @@ def test_sobol_prefix_consistency_and_shapes():
         assert abs(csv_main.loc[p, "ST_M_final"] - df_conv_top.loc[p, "ST_M_final"]) < 1e-4
         assert abs(csv_main.loc[p, "S1_Tcloud"] - df_conv_top.loc[p, "S1_Tcloud"]) < 1e-4
         assert abs(csv_main.loc[p, "S1_M_final"] - df_conv_top.loc[p, "S1_M_final"]) < 1e-4
+        assert abs(csv_main.loc[p, "ST_theta"] - df_conv_top.loc[p, "ST_theta"]) < 1e-4
+        assert abs(csv_main.loc[p, "S1_theta"] - df_conv_top.loc[p, "S1_theta"]) < 1e-4
 
 
 def test_binodal_independent_convex_hull_crosscheck():
